@@ -21,4 +21,10 @@ struct CPU {
     };
     word sp;
     word pc;
+    bool interrupts;
 };
+
+const byte ZERO_FLAG = 0x80;
+const byte ADDSUB_FLAG = 0x40;
+const byte HALFCARRY_FLAG = 0x20;
+const byte CARRY_FLAG = 0x10;

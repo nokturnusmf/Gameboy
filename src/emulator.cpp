@@ -15,14 +15,6 @@ void Emulator::run() {
     }
 }
 
-long Emulator::execute() {
-    byte op = memmap(cpu.pc);
-    switch (op) {
+#include "opcodes.h"
 
-    default:
-        std::cerr << "unimplemented " << std::hex << (int)op << '\n';
-        { char c; std::cin >> c; }
-        ++cpu.pc;
-        return 4;
-    }
-}
+#include "opcodes_bits.h"

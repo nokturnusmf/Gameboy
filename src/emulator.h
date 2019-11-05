@@ -15,6 +15,7 @@ public:
     void run();
 
     long execute();
+    long execute_bits();
 
 private:
     CPU cpu;

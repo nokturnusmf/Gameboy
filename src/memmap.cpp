@@ -17,6 +17,9 @@ MemoryMap::MemoryMap(const std::string& file_path)
 
 }
 
+static byte TEMP_IO[0x80];
+static byte TEMP_IER;
+
 byte& MemoryMap::operator()(word address) {
     if (address < 0x4000) {
         return rom[address];
@@ -37,10 +40,10 @@ byte& MemoryMap::operator()(word address) {
     } else if (address < 0xFF00) {
         throw address; // not usable
     } else if (address < 0xFF80) {
-        throw address; // TODO I/O ports
+        return TEMP_IO[address - 0xFF00]; // TODO I/O ports
     } else if (address < 0xFFFF) {
         return hram[address - 0xFF80];
     } else {
-        throw address; // TODO interrupt enable register
+        return TEMP_IER; // TODO interrupt enable register
     }
 }
