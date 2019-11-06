@@ -1,7 +1,7 @@
 #pragma once
 
 long Emulator::execute() {
-    byte op = memmap(cpu.pc);
+    byte op = memmap.read(cpu.pc);
 
     std::cout << std::hex << (int)cpu.pc << ": " << (int)op << '\n';
 
@@ -10,31 +10,250 @@ long Emulator::execute() {
         ++cpu.pc;
         return 4;
 
-    case 0x18: // jr imm
-        cpu.pc += (sbyte)memmap(cpu.pc + 1);
+    case 0x01: // ld bc, imm
+        cpu.bc = memmap.read_word(++cpu.pc);
+        cpu.pc += 2;
         return 12;
+
+    case 0x02: // ld (bc), a
+        memmap.write(cpu.bc, cpu.a);
+        ++cpu.pc;
+        return 8;
+
+    case 0x03: // inc bc
+        ++cpu.bc;
+        ++cpu.pc;
+        return 8;
+
+    case 0x04: // inc b
+        ++cpu.b;
+        ++cpu.pc;
+        return 4;
+
+    case 0x05: // dec b
+        --cpu.b;
+        ++cpu.pc;
+        return 4;
+
+    case 0x06: // ld b, imm
+        cpu.b = memmap.read((++cpu.pc)++);
+        return 8;
+
+    case 0x08: // ld (imm), sp
+        memmap.write_word(memmap.read_word(++cpu.pc), cpu.sp);
+        cpu.pc += 2;
+        return 16;
+
+    case 0x0B: // dec bc
+        --cpu.bc;
+        ++cpu.pc;
+        return 8;
+
+    case 0x0C: // inc c
+        ++cpu.c;
+        ++cpu.pc;
+        return 4;
+
+    case 0x0D: // dec c
+        --cpu.c;
+        ++cpu.pc;
+        return 4;
+
+    case 0x0E: // ld c, imm
+        cpu.c = memmap.read((++cpu.pc)++);
+        return 8;
+
+    case 0x10: // stop
+        std::cout << "stop\n";
+        ++cpu.pc;
+        return 0;
+
+    case 0x11: // ld de, imm
+        cpu.de = memmap.read_word(++cpu.pc);
+        cpu.pc += 2;
+        return 12;
+
+    case 0x12: // ld (de), a
+        memmap.write(cpu.de, cpu.a);
+        ++cpu.pc;
+        return 8;
+
+    case 0x13: // inc de
+        ++cpu.de;
+        ++cpu.pc;
+        return 8;
+
+    case 0x14: // inc d
+        ++cpu.d;
+        ++cpu.pc;
+        return 4;
+
+    case 0x15: // dec d
+        --cpu.d;
+        ++cpu.pc;
+        return 4;
+
+    case 0x16: // ld d, imm
+        cpu.d = memmap.read((++cpu.pc)++);
+        return 8;
+
+    case 0x18: // jr imm
+        cpu.pc += (sbyte)memmap.read(cpu.pc + 1);
+        return 12;
+
+    case 0x1B: // dec de
+        --cpu.de;
+        ++cpu.pc;
+        return 8;
+
+    case 0x1C: // inc e
+        ++cpu.e;
+        ++cpu.pc;
+        return 4;
+
+    case 0x1D: // dec e
+        --cpu.e;
+        ++cpu.pc;
+        return 4;
+
+    case 0x1E: // ld e, imm
+        cpu.e = memmap.read((++cpu.pc)++);
+        return 8;
 
     case 0x20: // jr imm # if nz
         if (cpu.flags & ZERO_FLAG) {
             cpu.pc += 2;
             return 8;
         } else {
-            cpu.pc += (sbyte)memmap(cpu.pc + 1);
+            cpu.pc += (sbyte)memmap.read(cpu.pc + 1);
             return 12;
         }
 
+    case 0x21: // ld hl, imm
+        cpu.hl = memmap.read_word(++cpu.pc);
+        cpu.pc += 2;
+        return 12;
+
+    case 0x22: // ldi (hl), a
+        memmap.write(cpu.hl++, cpu.a);
+        ++cpu.pc;
+        return 8;
+
+    case 0x23: // inc hl
+        ++cpu.hl;
+        ++cpu.pc;
+        return 8;
+
+    case 0x24: // inc h
+        ++cpu.h;
+        ++cpu.pc;
+        return 4;
+
+    case 0x25: // dec h
+        --cpu.h;
+        ++cpu.pc;
+        return 4;
+
+    case 0x26: // ld h, imm
+        cpu.h = memmap.read((++cpu.pc)++);
+        return 8;
+
     case 0x28: // jr imm # if z
         if (cpu.flags & ZERO_FLAG) {
-            cpu.pc += (sbyte)memmap(cpu.pc + 1);
+            cpu.pc += (sbyte)memmap.read(cpu.pc + 1);
             return 12;
         } else {
             cpu.pc += 2;
             return 8;
         }
 
-    case 0x3E: // ld imm # into a
-        cpu.a = memmap((++cpu.pc)++);
+    case 0x2A: // ldi a, (hl)
+        cpu.a = memmap.read(cpu.hl++);
+        ++cpu.pc;
         return 8;
+
+    case 0x2B: // dec hl
+        --cpu.hl;
+        ++cpu.pc;
+        return 8;
+
+    case 0x2C: // inc l
+        ++cpu.l;
+        ++cpu.pc;
+        return 4;
+
+    case 0x2D: // dec l
+        --cpu.l;
+        ++cpu.pc;
+        return 4;
+
+    case 0x2E: // ld l, imm
+        cpu.l = memmap.read((++cpu.pc)++);
+        return 8;
+
+    case 0x2F: // cpl
+        cpu.a = ~cpu.a;
+        ++cpu.pc;
+        return 4;
+
+    case 0x31: // ld sp, imm
+        cpu.sp = memmap.read_word(++cpu.pc);
+        cpu.pc += 2;
+        return 12;
+
+    case 0x32: // ldd (hl), a
+        memmap.write(cpu.hl--, cpu.a);
+        ++cpu.pc;
+        return 8;
+
+    case 0x33: // inc sp
+        ++cpu.sp;
+        ++cpu.pc;
+        return 8;
+
+    case 0x34: // inc (hl)
+        memmap.write(cpu.hl, memmap.read(cpu.hl) + 1);
+        ++cpu.pc;
+        return 12;
+
+    case 0x35: // dec (hl)
+        memmap.write(cpu.hl, memmap.read(cpu.hl) - 1);
+        ++cpu.pc;
+        return 12;
+
+    case 0x36: // ld (hl), imm
+        memmap.write(cpu.hl, memmap.read((++cpu.pc)++));
+        ++cpu.pc;
+        return 12;
+
+    case 0x3A: // ldd a, (hl)
+        cpu.a = memmap.read(cpu.hl--);
+        ++cpu.pc;
+        return 8;
+
+    case 0x3B: // dec sp
+        --cpu.sp;
+        ++cpu.pc;
+        return 8;
+
+    case 0x3C: // inc a
+        ++cpu.a;
+        ++cpu.pc;
+        return 4;
+
+    case 0x3D: // dec a
+        --cpu.a;
+        ++cpu.pc;
+        return 4;
+
+    case 0x3E: // ld a, imm
+        cpu.a = memmap.read((++cpu.pc)++);
+        return 8;
+
+    case 0x3F: // ccf
+        cpu.flags ^= CARRY_FLAG;
+        ++cpu.pc;
+        return 4;
 
     case 0x40: // ld b, b
         ++cpu.pc;
@@ -66,7 +285,7 @@ long Emulator::execute() {
         return 4;
 
     case 0x46: // ld b, (hl)
-        cpu.b = memmap(cpu.hl);
+        cpu.b = memmap.read(cpu.hl);
         ++cpu.pc;
         return 8;
 
@@ -105,7 +324,7 @@ long Emulator::execute() {
         return 4;
 
     case 0x4E: // ld c, (hl)
-        cpu.c = memmap(cpu.hl);
+        cpu.c = memmap.read(cpu.hl);
         ++cpu.pc;
         return 8;
 
@@ -144,7 +363,7 @@ long Emulator::execute() {
         return 4;
 
     case 0x56: // ld d, (hl)
-        cpu.d = memmap(cpu.hl);
+        cpu.d = memmap.read(cpu.hl);
         ++cpu.pc;
         return 8;
 
@@ -183,7 +402,7 @@ long Emulator::execute() {
         return 4;
 
     case 0x5E: // ld e, (hl)
-        cpu.e = memmap(cpu.hl);
+        cpu.e = memmap.read(cpu.hl);
         ++cpu.pc;
         return 8;
 
@@ -223,7 +442,7 @@ long Emulator::execute() {
         return 4;
 
     case 0x66: // ld h, (hl)
-        cpu.h = memmap(cpu.hl);
+        cpu.h = memmap.read(cpu.hl);
         ++cpu.pc;
         return 8;
 
@@ -263,7 +482,7 @@ long Emulator::execute() {
         return 4;
 
     case 0x6E: // ld l, (hl)
-        cpu.l = memmap(cpu.hl);
+        cpu.l = memmap.read(cpu.hl);
         ++cpu.pc;
         return 8;
 
@@ -273,41 +492,42 @@ long Emulator::execute() {
         return 4;
 
     case 0x70: // ld (hl), b
-        memmap(cpu.hl) = cpu.b;
+        memmap.write(cpu.hl, cpu.b);
         ++cpu.pc;
         return 8;
 
     case 0x71: // ld (hl), c
-        memmap(cpu.hl) = cpu.c;
+        memmap.write(cpu.hl, cpu.c);
         ++cpu.pc;
         return 8;
 
     case 0x72: // ld (hl), d
-        memmap(cpu.hl) = cpu.d;
+        memmap.write(cpu.hl, cpu.d);
         ++cpu.pc;
         return 8;
 
     case 0x73: // ld (hl), e
-        memmap(cpu.hl) = cpu.e;
+        memmap.write(cpu.hl, cpu.e);
         ++cpu.pc;
         return 8;
 
     case 0x74: // ld (hl), h
-        memmap(cpu.hl) = cpu.h;
+        memmap.write(cpu.hl, cpu.h);
         ++cpu.pc;
         return 8;
 
     case 0x75: // ld (hl), l
-        memmap(cpu.hl) = cpu.l;
+        memmap.write(cpu.hl, cpu.l);
         ++cpu.pc;
         return 8;
 
     case 0x76: // hlt
         std::cout << "halt\n";
+        ++cpu.pc;
         return 0;
 
     case 0x77: // ld (hl), a
-        memmap(cpu.hl) = cpu.a;
+        memmap.write(cpu.hl, cpu.a);
         ++cpu.pc;
         return 8;
 
@@ -342,7 +562,7 @@ long Emulator::execute() {
         return 4;
 
     case 0x7E: // ld a, (hl)
-        cpu.a = memmap(cpu.hl);
+        cpu.a = memmap.read(cpu.hl);
         ++cpu.pc;
         return 8;
 
@@ -350,53 +570,298 @@ long Emulator::execute() {
         ++cpu.pc;
         return 4;
 
-    case 0xAF: // xor a # with a
-        cpu.a = 0;
+    case 0xA0: // and b
+        cpu.a &= cpu.b;
+        cpu.flags = HALFCARRY_FLAG | (cpu.a ? 0 : CARRY_FLAG);
+        ++cpu.pc;
+        return 4;
+
+    case 0xA1: // and c
+        cpu.a &= cpu.c;
+        cpu.flags = HALFCARRY_FLAG | (cpu.a ? 0 : CARRY_FLAG);
+        ++cpu.pc;
+        return 4;
+
+    case 0xA2: // and d
+        cpu.a |= cpu.d;
+        cpu.flags = HALFCARRY_FLAG | (cpu.a ? 0 : CARRY_FLAG);
+        ++cpu.pc;
+        return 4;
+
+    case 0xA3: // and e
+        cpu.a &= cpu.e;
+        cpu.flags = HALFCARRY_FLAG | (cpu.a ? 0 : CARRY_FLAG);
+        ++cpu.pc;
+        return 4;
+
+    case 0xA4: // and h
+        cpu.a &= cpu.h;
+        cpu.flags = HALFCARRY_FLAG | (cpu.a ? 0 : CARRY_FLAG);
+        ++cpu.pc;
+        return 4;
+
+    case 0xA5: // and l
+        cpu.a &= cpu.l;
+        cpu.flags = HALFCARRY_FLAG | (cpu.a ? 0 : CARRY_FLAG);
+        ++cpu.pc;
+        return 4;
+
+    case 0xA6: // and (hl)
+        cpu.a &= memmap.read(cpu.hl);
+        cpu.flags = HALFCARRY_FLAG | (cpu.a ? 0 : CARRY_FLAG);
+        ++cpu.pc;
+        return 8;
+
+    case 0xA7: // and a
+        cpu.flags = HALFCARRY_FLAG | (cpu.a ? 0 : CARRY_FLAG);
+        ++cpu.pc;
+        return 4;
+
+    case 0xA8: // xor b
+        cpu.a ^= cpu.b;
+        cpu.flags = cpu.a ? 0 : CARRY_FLAG;
+        ++cpu.pc;
+        return 4;
+
+    case 0xA9: // xor c
+        cpu.a ^= cpu.c;
+        cpu.flags = cpu.a ? 0 : CARRY_FLAG;
+        ++cpu.pc;
+        return 4;
+
+    case 0xAA: // xor d
+        cpu.a ^= cpu.d;
+        cpu.flags = cpu.a ? 0 : CARRY_FLAG;
+        ++cpu.pc;
+        return 4;
+
+    case 0xAB: // or e
+        cpu.a |= cpu.e;
+        cpu.flags = cpu.a ? 0 : CARRY_FLAG;
+        ++cpu.pc;
+        return 4;
+
+    case 0xAC: // xor h
+        cpu.a ^= cpu.h;
+        cpu.flags = cpu.a ? 0 : CARRY_FLAG;
+        ++cpu.pc;
+        return 4;
+
+    case 0xAD: // xor l
+        cpu.a ^= cpu.l;
+        cpu.flags = cpu.a ? 0 : CARRY_FLAG;
+        ++cpu.pc;
+        return 4;
+
+    case 0xAE: // xor (hl)
+        cpu.a ^= memmap.read(cpu.hl);
+        cpu.flags = cpu.a ? 0 : CARRY_FLAG;
+        ++cpu.pc;
+        return 8;
+
+    case 0xAF: // xor a
+        cpu.flags = cpu.a ? 0 : CARRY_FLAG;
+        ++cpu.pc;
+        return 4;
+
+    case 0xB0: // or b
+        cpu.a |= cpu.b;
+        cpu.flags = cpu.a ? 0 : CARRY_FLAG;
+        ++cpu.pc;
+        return 4;
+
+    case 0xB1: // or c
+        cpu.a |= cpu.c;
+        cpu.flags = cpu.a ? 0 : CARRY_FLAG;
+        ++cpu.pc;
+        return 4;
+
+    case 0xB2: // or d
+        cpu.a |= cpu.d;
+        cpu.flags = cpu.a ? 0 : CARRY_FLAG;
+        ++cpu.pc;
+        return 4;
+
+    case 0xB3: // or e
+        cpu.a |= cpu.e;
+        cpu.flags = cpu.a ? 0 : CARRY_FLAG;
+        ++cpu.pc;
+        return 4;
+
+    case 0xB4: // or h
+        cpu.a |= cpu.h;
+        cpu.flags = cpu.a ? 0 : CARRY_FLAG;
+        ++cpu.pc;
+        return 4;
+
+    case 0xB5: // or l
+        cpu.a |= cpu.l;
+        cpu.flags = cpu.a ? 0 : CARRY_FLAG;
+        ++cpu.pc;
+        return 4;
+
+    case 0xB6: // or (hl)
+        cpu.a |= memmap.read(cpu.hl);
+        cpu.flags = cpu.a ? 0 : CARRY_FLAG;
+        ++cpu.pc;
+        return 8;
+
+    case 0xB7: // or a
+        cpu.flags = cpu.a ? 0 : CARRY_FLAG;
         ++cpu.pc;
         return 4;
 
     case 0xC3: // jmp imm
-        cpu.pc = *(word*)&memmap(cpu.pc + 1);
+        cpu.pc = memmap.read_word(cpu.pc + 1);
+        return 16;
+
+    case 0xC7: // rst 0x00
+        memmap.write_word((--cpu.sp)--, cpu.pc + 1);
+        cpu.pc = 0x00;
+        return 16;
+
+    case 0xC9: // ret
+        cpu.pc = memmap.read_word((++cpu.sp)++);
         return 16;
 
     case 0xCB: // bits
         return execute_bits();
 
     case 0xCD: // call imm
-        *(word*)&memmap((--cpu.sp)--) = cpu.pc + 3;
-        cpu.pc = *(word*)&memmap(cpu.pc + 1);
+        memmap.write_word((--cpu.sp)--, cpu.pc + 3);
+        cpu.pc = memmap.read_word(cpu.pc + 1);
         return 24;
 
-    case 0xCF: // rst 08
-        *(word*)&memmap((--cpu.sp)--) = cpu.pc + 1;
+    case 0xCF: // rst 0x08
+        memmap.write_word((--cpu.sp)--, cpu.pc + 1);
         cpu.pc = 0x08;
         return 16;
 
-    case 0xE0: // ld io[imm] # with a
-        memmap(0xFF00 + memmap((++cpu.pc)++)) = cpu.a;
+    case 0xD3: // -
+        std::cerr << "undefined opcode D3\n";
+        while (1) { char c; std::cin >> c; }
+
+    case 0xDB: // -
+        std::cerr << "undefined opcode DB\n";
+        while (1) { char c; std::cin >> c; }
+
+    case 0xDD: // -
+        std::cerr << "undefined opcode DD\n";
+        while (1) { char c; std::cin >> c; }
+
+    case 0xDF: // rst 0x18
+        memmap.write_word((--cpu.sp)--, cpu.pc + 1);
+        cpu.pc = 0x18;
+        return 16;
+
+    case 0xD7: // rst 0x10
+        memmap.write_word((--cpu.sp)--, cpu.pc + 1);
+        cpu.pc = 0x10;
+        return 16;
+
+    case 0xD9: // reti
+        cpu.pc = memmap.read_word((++cpu.sp)++);
+        cpu.interrupts = true;
+        return 16;
+
+    case 0xE0: // ld io[imm], a
+        memmap.write(0xFF00 + memmap.read((++cpu.pc)++), cpu.a);
         return 12;
 
-    case 0xEA: // ld (imm) # with a
-        memmap(*(word*)&memmap(++cpu.pc)) = cpu.a;
+    case 0xE2: // ld io[c], a
+        memmap.write(0xFF00 + cpu.c, cpu.a);
+        ++cpu.pc;
+        return 8;
+
+    case 0xE3: // -
+        std::cerr << "undefined opcode E3\n";
+        while (1) { char c; std::cin >> c; }
+
+    case 0xE4: // -
+        std::cerr << "undefined opcode E4\n";
+        while (1) { char c; std::cin >> c; }
+
+    case 0xE6: // and a, imm
+        cpu.a &= memmap.read((++cpu.pc)++);
+        return 8;
+
+    case 0xE7: // rst 0x20
+        memmap.write_word((--cpu.sp)--, cpu.pc + 1);
+        cpu.pc = 0x20;
+        return 16;
+
+    case 0xE8: // add sp, imm
+        cpu.sp += (sbyte)memmap.read((++cpu.pc)++);
+        return 16;
+
+    case 0xEA: // ld (imm), a
+        memmap.write(memmap.read_word(++cpu.pc), cpu.a);
         cpu.pc += 2;
         return 16;
 
-    case 0xF0: // ld io[imm] # into a
-        cpu.a = memmap(0xFF00 + memmap((++cpu.pc)++));
+    case 0xEB: // -
+        std::cerr << "undefined opcode EB\n";
+        while (1) { char c; std::cin >> c; }
+
+    case 0xEC: // -
+        std::cerr << "undefined opcode EC\n";
+        while (1) { char c; std::cin >> c; }
+
+    case 0xED: // -
+        std::cerr << "undefined opcode ED\n";
+        while (1) { char c; std::cin >> c; }
+
+    case 0xEF: // rst 0x28
+        memmap.write_word((--cpu.sp)--, cpu.pc + 1);
+        cpu.pc = 0x28;
+        return 16;
+
+    case 0xF0: // ld a, io[imm]
+        cpu.a = memmap.read(0xFF00 + memmap.read((++cpu.pc)++));
         return 12;
+
+    case 0xF2: // ld a, io[c]
+        cpu.a = memmap.read(0xFF00 + cpu.c);
+        ++cpu.pc;
+        return 8;
 
     case 0xF3: // di
         cpu.interrupts = false;
         ++cpu.pc;
         return 4;
 
+    case 0xF4: // -
+        std::cerr << "undefined opcode F4\n";
+        while (1) { char c; std::cin >> c; }
+
+    case 0xF7: // rst 0x30
+        memmap.write_word((--cpu.sp)--, cpu.pc + 1);
+        cpu.pc = 0x30;
+        return 16;
+
+    case 0xF8: // ld hl, sp[imm]
+        cpu.hl = memmap.read_word(cpu.sp + (sbyte)memmap.read((++cpu.pc)++));
+        return 12;
+
+    case 0xFA: // ld a, (imm)
+        cpu.a = memmap.read((++cpu.pc)++);
+        return 16;
+
     case 0xFB: // ei
         cpu.interrupts = true;
         ++cpu.pc;
         return 4;
 
-    case 0xFE: { // cmp imm # with a
-        byte b = memmap((++cpu.pc)++);
+    case 0xFC: // -
+        std::cerr << "undefined opcode FC\n";
+        while (1) { char c; std::cin >> c; }
+
+    case 0xFD: // -
+        std::cerr << "undefined opcode FD\n";
+        while (1) { char c; std::cin >> c; }
+
+    case 0xFE: { // cmp a, imm
+        byte b = memmap.read((++cpu.pc)++);
         if (cpu.a == b) {
             cpu.flags = ZERO_FLAG;
         } else if (cpu.a > b) {
@@ -407,8 +872,8 @@ long Emulator::execute() {
         return 8;
     }
 
-    case 0xFF: // rst 38
-        *(word*)&memmap((--cpu.sp)--) = cpu.pc + 1;
+    case 0xFF: // rst 0x38
+        memmap.write_word((--cpu.sp)--, cpu.pc + 1);
         cpu.pc = 0x38;
         return 16;
 
