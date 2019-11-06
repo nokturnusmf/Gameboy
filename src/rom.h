@@ -10,8 +10,6 @@ class Rom {
 public:
     Rom(const std::string& file_path);
 
-    byte& operator[](word address);
-
     byte read(word address);
     void write(word address, byte value);
 

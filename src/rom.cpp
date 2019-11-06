@@ -21,18 +21,10 @@ Rom::Rom(const std::string& file_path) : data(load_file(file_path)) {
     std::cout << &data[0x134] << ' ' << std::hex << (int)type() << ' ' << (int)size() << ' ' << (int)ram_size() << '\n';
 }
 
-byte& Rom::operator[](word address) {
+byte Rom::read(word address) {
     return data[address];
 }
 
-byte Rom::read(word address) {
-    if (address < 0x8000) {
-        return (*this)[address];
-    } else {
-        return 0; // TODO
-    }
-}
-
-void Rom::write(word address, byte value) {
+void Rom::write(word, byte) {
     // TODO
 }

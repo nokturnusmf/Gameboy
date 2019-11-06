@@ -1,39 +1,25 @@
 #include "memmap.h"
 
 MemoryMap::MemoryMap(CPU& cpu, Input& input, const std::string& file_path)
-    : cpu(cpu), input(input), ram(0x8000), vram(0x4000), hram(127), rom(file_path) {
+    : cpu(cpu), input(input), ram(0x8000), vram(0x4000), oam(160), hram(127), rom(file_path) {
 
-}
-
-byte* MemoryMap::physical(word address) {
-    if (address < 0x8000) {
-        return &rom[address];
-    } else if (address < 0xA000) {
-        return &vram[address];
-    } else if (address < 0xC000) {
-        throw address; // TODO external ram
-    } else if (address < 0xE000) {
-        return &ram[address];
-    } else if (address < 0xFE00) {
-        return physical(address - 0x2000);
-    } else if (address < 0xFEA0) {
-        throw address; // TODO sprite attribute table
-    } else if (address < 0xFF00) {
-        throw address; // not usable
-    } else if (address < 0xFF80) {
-        throw address; // control registers
-    } else if (address < 0xFFFF) {
-        return &hram[address - 0xFF80];
-    } else {
-        throw address; // control register
-    }
 }
 
 byte MemoryMap::read(word address) {
     if (address < 0x8000) {
-        return rom[address];
+        return rom.read(address);
+    } else if (address < 0xA000) {
+        return vram[address];
+    } else if (address < 0xC000) {
+        return rom.read(address);
+    } else if (address < 0xE000) {
+        return ram[address];
+    } else if (address < 0xFE00) {
+        return read(address - 0x2000);
+    } else if (address < 0xFEA0) {
+        return oam[address - 0xFE00];
     } else if (address < 0xFF00) {
-        return *physical(address);
+        throw address; // unmapped
     } else if (address < 0xFF80) {
         return read_ctrl(address);
     } else if (address < 0xFFFF) {
@@ -44,14 +30,24 @@ byte MemoryMap::read(word address) {
 }
 
 word MemoryMap::read_word(word address) {
-    return *reinterpret_cast<word*>(physical(address));
+    return (word)read(address) | (word)read(address + 1) << 8;
 }
 
 void MemoryMap::write(word address, byte value) {
     if (address < 0x8000) {
         rom.write(address, value);
+    } else if (address < 0xA000) {
+        vram[address] = value;
+    } else if (address < 0xC000) {
+        rom.write(address, value);
+    } else if (address < 0xE000) {
+        ram[address] = value;
+    } else if (address < 0xFE00) {
+        write(address - 0x2000, value);
+    } else if (address < 0xFEA0) {
+        oam[address - 0xFE00] = value;
     } else if (address < 0xFF00) {
-        *physical(address) = value;
+        throw address; // unmapped
     } else if (address < 0xFF80) {
         write_ctrl(address, value);
     } else if (address < 0xFFFF) {
@@ -62,8 +58,11 @@ void MemoryMap::write(word address, byte value) {
 }
 
 void MemoryMap::write_word(word address, word value) {
-    *reinterpret_cast<word*>(physical(address)) = value;
+    write(address, value);
+    write(address + 1, value >> 8);
 }
+
+#include <iostream>
 
 byte MemoryMap::read_ctrl(word address) {
     switch (address) {
@@ -71,6 +70,7 @@ byte MemoryMap::read_ctrl(word address) {
         return input.read();
 
     default:
+        std::cout << "read ctrl " << address << '\n';
         return 145;
         // throw address;
     }
@@ -83,6 +83,7 @@ void MemoryMap::write_ctrl(word address, byte value) {
         return;
 
     default:
+        std::cout << "write ctrl " << address << ' ' << (int)value << '\n';
         return;
         // throw address;
     }

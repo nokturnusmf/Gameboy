@@ -3,7 +3,7 @@
 long Emulator::execute_bits() {
     byte op = memmap.read((++cpu.pc)++);
 
-    std::cout << "bits: " << std::hex << (int)op << '\n';
+    // std::cout << "bits: " << std::hex << (int)op << '\n';
 
     switch (op) {
     case 0x40: // bit 0, b

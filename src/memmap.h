@@ -13,8 +13,6 @@ class MemoryMap {
 public:
     MemoryMap(CPU& cpu, Input& input, const std::string& file_path);
 
-    byte* physical(word address);
-
     byte read(word address);
     word read_word(word address);
 
@@ -31,6 +29,7 @@ private:
     BankedMemory<0xC000, 0x1000, 0x1000> ram;
     BankedMemory<0x8000, 0x2000, 0x0000> vram;
 
+    std::vector<byte> oam;
     std::vector<byte> hram;
 
     Rom rom;
