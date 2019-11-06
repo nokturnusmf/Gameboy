@@ -5,10 +5,11 @@
 
 #include "gb.h"
 #include "cpu.h"
+#include "rom.h"
 
 class MemoryMap {
 public:
-    MemoryMap(const std::string& file_path);
+    MemoryMap(CPU& cpu, const std::string& file_path);
 
     byte* physical(word address);
 
@@ -22,14 +23,15 @@ private:
     byte read_ctrl(word address);
     void write_ctrl(word address, byte value);
 
+    CPU& cpu;
+
     std::vector<byte> ram;
     std::vector<byte> vram;
     std::vector<byte> hram;
     std::vector<byte> xram;
 
-    std::vector<byte> rom;
+    Rom rom;
 
     int ram_bank;
     int vram_bank;
-    int rom_bank;
 };
