@@ -16,6 +16,6 @@ void Emulator::run() {
     }
 }
 
-#include "opcodes.h"
+#include "opcodes.impl"
 
-#include "opcodes_bits.h"
+#include "opcodes_bits.impl"
