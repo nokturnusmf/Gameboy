@@ -7,10 +7,11 @@
 #include "cpu.h"
 #include "bank.h"
 #include "rom.h"
+#include "input.h"
 
 class MemoryMap {
 public:
-    MemoryMap(CPU& cpu, const std::string& file_path);
+    MemoryMap(CPU& cpu, Input& input, const std::string& file_path);
 
     byte* physical(word address);
 
@@ -25,6 +26,7 @@ private:
     void write_ctrl(word address, byte value);
 
     CPU& cpu;
+    Input& input;
 
     BankedMemory<0xC000, 0x1000, 0x1000> ram;
     BankedMemory<0x8000, 0x2000, 0x0000> vram;

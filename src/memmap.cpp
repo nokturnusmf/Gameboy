@@ -1,7 +1,7 @@
 #include "memmap.h"
 
-MemoryMap::MemoryMap(CPU& cpu, const std::string& file_path)
-    : cpu(cpu), ram(0x8000), vram(0x4000), hram(127), rom(file_path) {
+MemoryMap::MemoryMap(CPU& cpu, Input& input, const std::string& file_path)
+    : cpu(cpu), input(input), ram(0x8000), vram(0x4000), hram(127), rom(file_path) {
 
 }
 
@@ -66,11 +66,24 @@ void MemoryMap::write_word(word address, word value) {
 }
 
 byte MemoryMap::read_ctrl(word address) {
-    return 145;
-    // throw address;
-    return 0;
+    switch (address) {
+    case 0xFF00:
+        return input.read();
+
+    default:
+        return 145;
+        // throw address;
+    }
 }
 
 void MemoryMap::write_ctrl(word address, byte value) {
-    // throw address;
+    switch (address) {
+    case 0xFF00:
+        input.write(value);
+        return;
+
+    default:
+        return;
+        // throw address;
+    }
 }

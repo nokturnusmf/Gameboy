@@ -6,6 +6,7 @@
 #include "gb.h"
 #include "cpu.h"
 #include "memmap.h"
+#include "input.h"
 
 class Emulator {
 public:
@@ -19,5 +20,6 @@ public:
 
 private:
     CPU cpu;
+    Input input;
     MemoryMap memmap;
 };
