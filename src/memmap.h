@@ -5,6 +5,7 @@
 
 #include "gb.h"
 #include "cpu.h"
+#include "bank.h"
 #include "rom.h"
 
 class MemoryMap {
@@ -25,13 +26,10 @@ private:
 
     CPU& cpu;
 
-    std::vector<byte> ram;
-    std::vector<byte> vram;
+    BankedMemory<0xC000, 0x1000, 0x1000> ram;
+    BankedMemory<0x8000, 0x2000, 0x0000> vram;
+
     std::vector<byte> hram;
-    std::vector<byte> xram;
 
     Rom rom;
-
-    int ram_bank;
-    int vram_bank;
 };

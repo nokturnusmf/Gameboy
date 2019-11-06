@@ -4,6 +4,7 @@
 #include <string>
 
 #include "gb.h"
+#include "bank.h"
 
 class Rom {
 public:
@@ -19,7 +20,5 @@ public:
     byte ram_size() { return data[0x149]; }
 
 private:
-    std::vector<byte> data;
-
-    int bank = 0;
+    BankedMemory<0x0000, 0x4000, 0x4000> data;
 };

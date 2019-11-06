@@ -1,7 +1,7 @@
 #include "memmap.h"
 
 MemoryMap::MemoryMap(CPU& cpu, const std::string& file_path)
-    : cpu(cpu), ram(0x8000), vram(0x4000), hram(127), rom(file_path), ram_bank(0x1000 - 0xD000), vram_bank(-0x8000) {
+    : cpu(cpu), ram(0x8000), vram(0x4000), hram(127), rom(file_path) {
 
 }
 
@@ -9,13 +9,11 @@ byte* MemoryMap::physical(word address) {
     if (address < 0x8000) {
         return &rom[address];
     } else if (address < 0xA000) {
-        return &vram[vram_bank + address];
+        return &vram[address];
     } else if (address < 0xC000) {
         throw address; // TODO external ram
-    } else if (address < 0xD000) {
-        return &ram[address - 0xD000];
     } else if (address < 0xE000) {
-        return &ram[ram_bank + address];
+        return &ram[address];
     } else if (address < 0xFE00) {
         return physical(address - 0x2000);
     } else if (address < 0xFEA0) {

@@ -1,0 +1,15 @@
+#pragma once
+
+template<unsigned Address, unsigned Block, unsigned Offset>
+byte& BankedMemory<Address, Block, Offset>::operator[](word address) {
+    unsigned o = address - Address;
+    if (o >= Offset) {
+        o += bank;
+    }
+    return data[o];
+}
+
+template<unsigned Address, unsigned Block, unsigned Offset>
+void BankedMemory<Address, Block, Offset>::set_bank(int bank) {
+    this->bank = bank * Block - Offset;
+}
