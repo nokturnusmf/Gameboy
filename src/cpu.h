@@ -4,19 +4,19 @@
 
 struct CPU {
     union {
-        struct { byte a; byte flags; };
+        struct { byte flags; byte a; };
         word af;
     };
     union {
-        struct { byte b; byte c; };
+        struct { byte c; byte b; };
         word bc;
     };
     union {
-        struct { byte d; byte e; };
+        struct { byte e; byte d; };
         word de;
     };
     union {
-        struct { byte h; byte l; };
+        struct { byte l; byte h; };
         word hl;
     };
     word sp;
