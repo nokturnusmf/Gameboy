@@ -25,6 +25,6 @@ byte Rom::read(word address) {
     return data[address];
 }
 
-void Rom::write(word, byte) {
-    // TODO
+void Rom::write(word address, byte value) {
+    std::cout << "rom write " << address << ' ' << (int)value << '\n';
 }

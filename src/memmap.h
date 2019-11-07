@@ -4,14 +4,15 @@
 #include <string>
 
 #include "gb.h"
-#include "cpu.h"
 #include "bank.h"
 #include "rom.h"
-#include "input.h"
+
+class Interrupts;
+class Input;
 
 class MemoryMap {
 public:
-    MemoryMap(CPU& cpu, Input& input, const std::string& file_path);
+    MemoryMap(Interrupts& interrupts, Input& input, const std::string& file_path);
 
     byte read(word address);
     word read_word(word address);
@@ -23,7 +24,7 @@ private:
     byte read_ctrl(word address);
     void write_ctrl(word address, byte value);
 
-    CPU& cpu;
+    Interrupts& interrupts;
     Input& input;
 
     BankedMemory<0xC000, 0x1000, 0x1000> ram;

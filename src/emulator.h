@@ -6,6 +6,7 @@
 #include "gb.h"
 #include "cpu.h"
 #include "memmap.h"
+#include "interrupts.h"
 #include "input.h"
 
 class Emulator {
@@ -20,6 +21,7 @@ public:
 
 private:
     CPU cpu;
-    Input input;
     MemoryMap memmap;
+    Interrupts interrupts;
+    Input input;
 };

@@ -812,7 +812,7 @@ long Emulator::execute() {
 
     case 0xD9: // reti
         cpu.pc = memmap.read_word((++cpu.sp)++);
-        cpu.interrupts = true;
+        interrupts.ime = true;
         return 16;
 
     case 0xE0: // ld io[imm], a
@@ -882,7 +882,7 @@ long Emulator::execute() {
         return 8;
 
     case 0xF3: // di
-        cpu.interrupts = false;
+        interrupts.ime = false;
         ++cpu.pc;
         return 4;
 
@@ -909,7 +909,7 @@ long Emulator::execute() {
         return 16;
 
     case 0xFB: // ei
-        cpu.interrupts = true;
+        interrupts.ime = true;
         ++cpu.pc;
         return 4;
 

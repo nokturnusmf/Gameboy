@@ -1,7 +1,10 @@
 #include "memmap.h"
 
-MemoryMap::MemoryMap(CPU& cpu, Input& input, const std::string& file_path)
-    : cpu(cpu), input(input), ram(0x8000), vram(0x4000), oam(160), hram(127), rom(file_path) {
+#include "interrupts.h"
+#include "input.h"
+
+MemoryMap::MemoryMap(Interrupts& interrupts, Input& input, const std::string& file_path)
+    : interrupts(interrupts), input(input), ram(0x8000), vram(0x4000), oam(160), hram(127), rom(file_path) {
 
 }
 
@@ -25,7 +28,7 @@ byte MemoryMap::read(word address) {
     } else if (address < 0xFFFF) {
         return hram[address - 0xFF80];
     } else {
-        return cpu.interrupts;
+        return interrupts.enabled;
     }
 }
 
@@ -53,7 +56,7 @@ void MemoryMap::write(word address, byte value) {
     } else if (address < 0xFFFF) {
         hram[address - 0xFF80] = value;
     } else {
-        cpu.interrupts = value;
+        interrupts.enabled = value;
     }
 }
 
@@ -69,6 +72,9 @@ byte MemoryMap::read_ctrl(word address) {
     case 0xFF00:
         return input.read();
 
+    case 0xFF0F:
+        return interrupts.flags;
+
     default:
         std::cout << "read ctrl " << address << '\n';
         return 145;
@@ -80,11 +86,15 @@ void MemoryMap::write_ctrl(word address, byte value) {
     switch (address) {
     case 0xFF00:
         input.write(value);
-        return;
+        break;
+
+    case 0xFF0F:
+        interrupts.flags = value;
+        break;
 
     default:
         std::cout << "write ctrl " << address << ' ' << (int)value << '\n';
-        return;
+        break;
         // throw address;
     }
 }
