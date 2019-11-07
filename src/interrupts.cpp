@@ -19,23 +19,23 @@ void Interrupts::process() {
     case 0:
         return;
 
-    case 0x01:
+    case Interrupts::VBlank:
         do_call(cpu, memmap, 0x40);
         break;
 
-    case 0x02:
+    case Interrupts::LCDStat:
         do_call(cpu, memmap, 0x48);
         break;
 
-    case 0x04:
+    case Interrupts::Timer:
         do_call(cpu, memmap, 0x50);
         break;
 
-    case 0x08:
+    case Interrupts::Serial:
         do_call(cpu, memmap, 0x58);
         break;
 
-    case 0x10:
+    case Interrupts::Joypad:
         do_call(cpu, memmap, 0x60);
         break;
     }

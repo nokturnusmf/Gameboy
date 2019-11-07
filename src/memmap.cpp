@@ -68,11 +68,11 @@ void MemoryMap::write_word(word address, word value) {
 #include <iostream>
 
 byte MemoryMap::read_ctrl(word address) {
-    switch (address) {
-    case 0xFF00:
+    switch (address & 0xFF) {
+    case 0x00:
         return input.read();
 
-    case 0xFF0F:
+    case 0x0F:
         return interrupts.flags;
 
     default:
@@ -83,13 +83,25 @@ byte MemoryMap::read_ctrl(word address) {
 }
 
 void MemoryMap::write_ctrl(word address, byte value) {
-    switch (address) {
-    case 0xFF00:
+    switch (address & 0xFF) {
+    case 0x00:
         input.write(value);
         break;
 
-    case 0xFF0F:
+    case 0x0F:
         interrupts.flags = value;
+        break;
+
+    case 0x46: {
+        word source = (word)value << 8;
+        for (int i = 0; i < 160; ++i) {
+            oam[i] = read(source + i);
+        }
+        break;
+    }
+
+    case 0x4F:
+        vram.set_bank(value);
         break;
 
     default:
