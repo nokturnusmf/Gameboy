@@ -1,12 +1,75 @@
 #include "display.h"
 
+#include "interrupts.h"
+
+static const int ModeCycles[] = { 80, 172, 204 };
+static const int SCANLINE = ModeCycles[0] + ModeCycles[1] + ModeCycles[2];
+
+static const byte STAT_MASK = 0xFC;
+static const byte LYC_IE = 0x40;
+static const byte LYC_COINC = 0x04;
+
 void Display::advance(long cycles) {
-    if ((cycle_count += cycles) >= 9198) {
-        cycle_count -= 9198;
-        if (++ly > 153) {
-            display_callback(reinterpret_cast<byte*>(framebuffer));
-            ly = 0;
+    cycle_count += cycles;
+    switch (mode) {
+    case VideoMode::Oam:
+        if (cycle_count >= ModeCycles[mode]) {
+            cycle_count %= ModeCycles[mode];
+            regs.stat = (regs.stat & STAT_MASK) | 0b11;
+            mode = VideoMode::Transfer;
         }
+        break;
+
+    case VideoMode::Transfer:
+        if (cycle_count >= ModeCycles[mode]) {
+            cycle_count %= ModeCycles[mode];
+            mode = VideoMode::HBlank;
+            regs.stat = (regs.stat & STAT_MASK) | 0b00;
+
+            if (regs.stat & 0x08) {
+                interrupts.flags |= Interrupts::LCDStat;
+            }
+
+            if (regs.stat & LYC_IE && regs.ly == regs.lyc) {
+                interrupts.flags |= Interrupts::LCDStat;
+                regs.stat |= LYC_COINC;
+            } else {
+                regs.stat &= ~LYC_COINC;
+            }
+        }
+        break;
+
+    case VideoMode::HBlank:
+        if (cycle_count >= ModeCycles[mode]) {
+            cycle_count %= ModeCycles[mode];
+
+            // draw line
+
+            if (++regs.ly < 144) {
+                mode = VideoMode::Oam;
+                regs.stat = (regs.stat & STAT_MASK) | 0b10;
+            } else {
+                mode = VideoMode::VBlank;
+                regs.stat = (regs.stat & STAT_MASK) | 0b01;
+                interrupts.flags |= Interrupts::VBlank;
+            }
+        }
+        break;
+
+    case VideoMode::VBlank:
+        if (cycle_count >= SCANLINE) {
+            cycle_count %= SCANLINE;
+
+            if (++regs.ly == 154) {
+                // draw sprites
+                display_callback(reinterpret_cast<byte*>(framebuffer));
+
+                regs.ly = 0;
+                mode = VideoMode::Oam;
+                regs.stat = (regs.stat & STAT_MASK) | 0b10;
+            }
+        }
+        break;
     }
 }
 
@@ -14,44 +77,44 @@ void Display::advance(long cycles) {
 #include <iomanip>
 
 byte Display::read_io(word address) {
-    if (address == 0xFF44) return ly;
+    if (address == 0xFF44) return regs.ly;
     std::cout << "lcd read " << std::hex << address << '\n';
     switch (address & 0xFF) {
     case 0x40:
-        return lcdc;
+        return regs.lcdc;
 
     case 0x41:
-        return stat;
+        return regs.stat;
 
     case 0x42:
-        return scy;
+        return regs.scy;
 
     case 0x43:
-        return scx;
+        return regs.scx;
 
     case 0x44:
-        return ly;
+        return regs.ly;
 
     case 0x45:
-        return lyc;
+        return regs.lyc;
 
     case 0x4A:
-        return wy;
+        return regs.wy;
 
     case 0x4B:
-        return wx;
+        return regs.wx;
 
     case 0x68:
-        return bgpi;
+        return regs.bgpi;
 
     case 0x69:
-        return bgpd;
+        return regs.bgpd;
 
     case 0x6A:
-        return obpi;
+        return regs.obpi;
 
     case 0x6B:
-        return obpd;
+        return regs.obpd;
 
     default:
         std::cerr << "lcd invalid read " << address << '\n';
@@ -63,51 +126,51 @@ void Display::write_io(word address, byte value) {
     std::cout << "lcd write " << std::hex << address << ' ' << (int)value << '\n';
     switch (address & 0xFF) {
     case 0x40:
-        lcdc = value;
+        regs.lcdc = value;
         break;
 
     case 0x41:
-        stat = value;
+        regs.stat = value;
         break;
 
     case 0x42:
-        scy = value;
+        regs.scy = value;
         break;
 
     case 0x43:
-        scx = value;
+        regs.scx = value;
         break;
 
     case 0x44:
-        ly = value;
+        regs.ly = value;
         break;
 
     case 0x45:
-        lyc = value;
+        regs.lyc = value;
         break;
 
     case 0x4A:
-        wy = value;
+        regs.wy = value;
         break;
 
     case 0x4B:
-        wx = value;
+        regs.wx = value;
         break;
 
     case 0x68:
-        bgpi = value;
+        regs.bgpi = value;
         break;
 
     case 0x69:
-        bgpd = value;
+        regs.bgpd = value;
         break;
 
     case 0x6A:
-        obpi = value;
+        regs.obpi = value;
         break;
 
     case 0x6B:
-        obpd = value;
+        regs.obpd = value;
         break;
 
     default:

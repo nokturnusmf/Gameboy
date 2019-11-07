@@ -10,6 +10,28 @@ struct Pixel {
     byte b;
 };
 
+enum VideoMode {
+    Oam,
+    Transfer,
+    HBlank,
+    VBlank
+};
+
+struct LCDRegisters {
+    byte lcdc;
+    byte stat;
+    byte scy;
+    byte scx;
+    byte ly;
+    byte lyc;
+    byte wy;
+    byte wx;
+    byte bgpi;
+    byte bgpd;
+    byte obpi;
+    byte obpd;
+};
+
 class Display {
 public:
     Display(void(*display_callback)(byte*), Interrupts& interrupts)
@@ -25,20 +47,10 @@ private:
 
     Interrupts& interrupts;
 
+    VideoMode mode = VideoMode::Oam;
+    LCDRegisters regs;
+
     Pixel framebuffer[160 * 144];
 
     long cycle_count = 0;
-
-    byte lcdc;
-    byte stat;
-    byte scy;
-    byte scx;
-    byte ly;
-    byte lyc;
-    byte wy;
-    byte wx;
-    byte bgpi;
-    byte bgpd;
-    byte obpi;
-    byte obpd;
 };

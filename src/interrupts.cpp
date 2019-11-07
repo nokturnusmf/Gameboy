@@ -15,6 +15,7 @@ void Interrupts::process() {
 
     byte b = enabled & flags;
     b &= -b;
+
     switch (b) {
     case 0:
         return;
@@ -39,6 +40,7 @@ void Interrupts::process() {
         do_call(cpu, memmap, 0x60);
         break;
     }
+
     ime = false;
     flags &= ~b;
     cpu.halt = false;

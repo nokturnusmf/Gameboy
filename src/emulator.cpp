@@ -18,23 +18,27 @@ Emulator::Emulator(const std::string& file_path)
 #include "gl.impl"
 
 static GLFWwindow* window;
+static bool running = true;
 
 void display_callback(byte* pixels) {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 160, 144, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
     glfwSwapBuffers(window);
+
+    glfwPollEvents();
+    running = !glfwWindowShouldClose(window);
 }
 
 void Emulator::run() {
     glfwInit();
-    window = glfwCreateWindow(160, 144, "GameBoy", 0, 0);
+    window = glfwCreateWindow(640, 576, "GameBoy", 0, 0);
     glfwMakeContextCurrent(window);
     setup_gl();
 
-    while (!glfwWindowShouldClose(window)) {
+    while (running) {
         long cycles = execute();
         interrupts.process();
         display.advance(cycles);
-        glfwPollEvents();
     }
 
     glfwTerminate();
