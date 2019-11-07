@@ -3,7 +3,7 @@ CXX_FLAGS	:= -Wall -Wextra
 REL_FLAGS	:= -O3 -flto -march=native
 DBG_FLAGS	:= -g
 
-LIBS 		:= -lm
+LIBS 		:= -lglfw -lGL -lGLEW
 
 SRC 		:= $(shell find src/ -name "*.cpp")
 RELEASE_OBJ	:= $(patsubst src/%.cpp, bin/obj/release/%.o, $(SRC))

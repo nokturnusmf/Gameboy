@@ -6,6 +6,7 @@
 #include "gb.h"
 #include "cpu.h"
 #include "memmap.h"
+#include "display.h"
 #include "interrupts.h"
 #include "input.h"
 
@@ -22,6 +23,7 @@ public:
 private:
     CPU cpu;
     MemoryMap memmap;
+    Display display;
     Interrupts interrupts;
     Input input;
 };

@@ -7,12 +7,13 @@
 #include "bank.h"
 #include "rom.h"
 
+class Display;
 class Interrupts;
 class Input;
 
 class MemoryMap {
 public:
-    MemoryMap(Interrupts& interrupts, Input& input, const std::string& file_path);
+    MemoryMap(Display& display, Interrupts& interrupts, Input& input, const std::string& file_path);
 
     byte read(word address);
     word read_word(word address);
@@ -24,6 +25,7 @@ private:
     byte read_ctrl(word address);
     void write_ctrl(word address, byte value);
 
+    Display& display;
     Interrupts& interrupts;
     Input& input;
 
