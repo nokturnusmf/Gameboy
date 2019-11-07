@@ -41,4 +41,5 @@ void Interrupts::process() {
     }
     ime = false;
     flags &= ~b;
+    cpu.halt = false;
 }

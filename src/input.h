@@ -4,6 +4,8 @@
 
 class Input {
 public:
+    Input() : states{ 0 }, toggle(false) {}
+
     enum Button {
         Down,
         Up,

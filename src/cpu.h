@@ -21,6 +21,7 @@ struct CPU {
     };
     word sp;
     word pc;
+    bool halt;
 };
 
 const byte ZERO_FLAG = 0x80;

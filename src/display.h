@@ -2,10 +2,18 @@
 
 #include "gb.h"
 
+class Interrupts;
+
+struct Pixel {
+    byte r;
+    byte g;
+    byte b;
+};
+
 class Display {
 public:
-    Display(void(*display_callback)(unsigned char*))
-        : display_callback(display_callback) {}
+    Display(void(*display_callback)(byte*), Interrupts& interrupts)
+        : display_callback(display_callback), interrupts(interrupts) {}
 
     void advance(long cycles);
 
@@ -13,9 +21,11 @@ public:
     void write_io(word address, byte value);
 
 private:
-    void(*display_callback)(unsigned char*);
+    void(*display_callback)(byte*);
 
-    unsigned char framebuffer[160 * 144 * 3];
+    Interrupts& interrupts;
+
+    Pixel framebuffer[160 * 144];
 
     long cycle_count = 0;
 

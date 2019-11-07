@@ -6,10 +6,10 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-void display_callback(unsigned char*);
+void display_callback(byte*);
 
 Emulator::Emulator(const std::string& file_path)
-    : cpu({ }), memmap(display, interrupts, input, file_path), display(display_callback), interrupts(cpu, memmap) {
+    : cpu({ }), memmap(display, interrupts, input, file_path), interrupts(cpu, memmap), display(display_callback, interrupts) {
     cpu.a = 0x11;
     cpu.sp = 0xFFFE;
     cpu.pc = 0x100;
@@ -19,7 +19,7 @@ Emulator::Emulator(const std::string& file_path)
 
 static GLFWwindow* window;
 
-void display_callback(unsigned char* pixels) {
+void display_callback(byte* pixels) {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 160, 144, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
     glfwSwapBuffers(window);
 }

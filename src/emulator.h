@@ -6,14 +6,13 @@
 #include "gb.h"
 #include "cpu.h"
 #include "memmap.h"
-#include "display.h"
 #include "interrupts.h"
+#include "display.h"
 #include "input.h"
 
 class Emulator {
 public:
     Emulator(const std::string& file_path);
-    // ~Emulator();
 
     void run();
 
@@ -23,7 +22,7 @@ public:
 private:
     CPU cpu;
     MemoryMap memmap;
-    Display display;
     Interrupts interrupts;
+    Display display;
     Input input;
 };

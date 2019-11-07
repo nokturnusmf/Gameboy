@@ -1,6 +1,10 @@
 #pragma once
 
 long Emulator::execute() {
+    if (cpu.halt) {
+        return 4;
+    }
+
     byte op = memmap.read(cpu.pc);
     if (op == 0xFF) {
         std::cerr << "ff\n";
@@ -8,7 +12,7 @@ long Emulator::execute() {
         return 0;
     }
 
-    std::cout << std::hex << (int)cpu.pc << '\n';
+    // std::cout << std::hex << (int)cpu.pc << '\n';
 
     switch (op) {
     case 0: // nop
@@ -569,7 +573,7 @@ long Emulator::execute() {
         return 8;
 
     case 0x76: // hlt
-        std::cout << "halt\n";
+        cpu.halt = true;
         ++cpu.pc;
         return 0;
 

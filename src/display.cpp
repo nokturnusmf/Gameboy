@@ -4,7 +4,7 @@ void Display::advance(long cycles) {
     if ((cycle_count += cycles) >= 9198) {
         cycle_count -= 9198;
         if (++ly > 153) {
-            display_callback(framebuffer);
+            display_callback(reinterpret_cast<byte*>(framebuffer));
             ly = 0;
         }
     }
