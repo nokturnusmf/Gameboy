@@ -49,6 +49,12 @@ long Emulator::execute() {
         cpu.pc += 2;
         return 16;
 
+    case 0x09: // add hl, bc
+        cpu.hl += cpu.bc;
+        cpu.flags = (cpu.hl < cpu.bc ? CARRY_FLAG : 0) | (cpu.flags & ZERO_FLAG);
+        ++cpu.pc;
+        return 12;
+
     case 0x0B: // dec bc
         cpu.flags = ADDSUB_FLAG | (--cpu.bc ? 0 : ZERO_FLAG) | (cpu.flags & CARRY_FLAG);
         ++cpu.pc;
@@ -104,6 +110,12 @@ long Emulator::execute() {
 
     case 0x18: // jr imm
         cpu.pc += (sbyte)memmap.read((++cpu.pc)++);
+        return 12;
+
+    case 0x19: // add hl, de
+        cpu.hl += cpu.de;
+        cpu.flags = (cpu.hl < cpu.de ? CARRY_FLAG : 0) | (cpu.flags & ZERO_FLAG);
+        ++cpu.pc;
         return 12;
 
     case 0x1B: // dec de
@@ -172,6 +184,12 @@ long Emulator::execute() {
             return 8;
         }
 
+    case 0x29: // add hl, hl
+        cpu.flags = (cpu.hl & 0x8000 ? CARRY_FLAG : 0) | (cpu.flags & ZERO_FLAG);
+        cpu.hl <<= 1;
+        ++cpu.pc;
+        return 12;
+
     case 0x2A: // ldi a, (hl)
         cpu.a = memmap.read(cpu.hl++);
         ++cpu.pc;
@@ -201,6 +219,15 @@ long Emulator::execute() {
         ++cpu.pc;
         return 4;
 
+    case 0x30: // jr nc imm
+        if (cpu.flags & CARRY_FLAG) {
+            cpu.pc += 2;
+            return 8;
+        } else {
+            cpu.pc += (sbyte)memmap.read((++cpu.pc)++);
+            return 12;
+        }
+
     case 0x31: // ld sp, imm
         cpu.sp = memmap.read_word(++cpu.pc);
         cpu.pc += 2;
@@ -228,6 +255,12 @@ long Emulator::execute() {
 
     case 0x36: // ld (hl), imm
         memmap.write(cpu.hl, memmap.read((++cpu.pc)++));
+        return 12;
+
+    case 0x39: // add hl, sp
+        cpu.hl += cpu.sp;
+        cpu.flags = (cpu.hl < cpu.sp ? CARRY_FLAG : 0) | (cpu.flags & ZERO_FLAG);
+        ++cpu.pc;
         return 12;
 
     case 0x3A: // ldd a, (hl)
@@ -574,6 +607,209 @@ long Emulator::execute() {
         ++cpu.pc;
         return 4;
 
+    case 0x80: // add a, b
+        cpu.a += cpu.b;
+        cpu.flags = (cpu.a < cpu.b ? CARRY_FLAG : 0) | (cpu.a ? 0 : ZERO_FLAG);
+        ++cpu.pc;
+        return 4;
+
+    case 0x81: // add a, c
+        cpu.a += cpu.c;
+        cpu.flags = (cpu.a < cpu.c ? CARRY_FLAG : 0) | (cpu.a ? 0 : ZERO_FLAG);
+        ++cpu.pc;
+        return 4;
+
+    case 0x82: // add a, d
+        cpu.a += cpu.d;
+        cpu.flags = (cpu.a < cpu.d ? CARRY_FLAG : 0) | (cpu.a ? 0 : ZERO_FLAG);
+        ++cpu.pc;
+        return 4;
+
+    case 0x83: // add a, e
+        cpu.a += cpu.e;
+        cpu.flags = (cpu.a < cpu.e ? CARRY_FLAG : 0) | (cpu.a ? 0 : ZERO_FLAG);
+        ++cpu.pc;
+        return 4;
+
+    case 0x84: // add a, h
+        cpu.a += cpu.h;
+        cpu.flags = (cpu.a < cpu.h ? CARRY_FLAG : 0) | (cpu.a ? 0 : ZERO_FLAG);
+        ++cpu.pc;
+        return 4;
+
+    case 0x85: // add a, l
+        cpu.a += cpu.l;
+        cpu.flags = (cpu.a < cpu.l ? CARRY_FLAG : 0) | (cpu.a ? 0 : ZERO_FLAG);
+        ++cpu.pc;
+        return 4;
+
+    case 0x86: { // add a, (hl)
+        byte b = memmap.read(cpu.hl);
+        cpu.a += b;
+        cpu.flags = (cpu.a < b ? CARRY_FLAG : 0) | (cpu.flags ? 0 : ZERO_FLAG);
+        ++cpu.pc;
+        return 8;
+    }
+
+    case 0x87: // add a, a
+        cpu.flags = (cpu.a & 0x80 ? CARRY_FLAG : 0) | (cpu.a ? 0 : ZERO_FLAG);
+        cpu.a <<= 1;
+        ++cpu.pc;
+        return 4;
+
+    case 0x88: // adc a, b
+        cpu.a += cpu.b + (bool)(cpu.flags & CARRY_FLAG);
+        cpu.flags = (cpu.a < cpu.b ? CARRY_FLAG : 0) | (cpu.a ? 0 : ZERO_FLAG);
+        ++cpu.pc;
+        return 4;
+
+    case 0x89: // adc a, c
+        cpu.a += cpu.c + (bool)(cpu.flags & CARRY_FLAG);
+        cpu.flags = (cpu.a < cpu.c ? CARRY_FLAG : 0) | (cpu.a ? 0 : ZERO_FLAG);
+        ++cpu.pc;
+        return 4;
+
+    case 0x8A: // adc a, d
+        cpu.a += cpu.d + (bool)(cpu.flags & CARRY_FLAG);
+        cpu.flags = (cpu.a < cpu.d ? CARRY_FLAG : 0) | (cpu.a ? 0 : ZERO_FLAG);
+        ++cpu.pc;
+        return 4;
+
+    case 0x8B: // adc a, e
+        cpu.a += cpu.e + (bool)(cpu.flags & CARRY_FLAG);
+        cpu.flags = (cpu.a < cpu.e ? CARRY_FLAG : 0) | (cpu.a ? 0 : ZERO_FLAG);
+        ++cpu.pc;
+        return 4;
+
+    case 0x8C: // adc a, h
+        cpu.a += cpu.h + (bool)(cpu.flags & CARRY_FLAG);
+        cpu.flags = (cpu.a < cpu.h ? CARRY_FLAG : 0) | (cpu.a ? 0 : ZERO_FLAG);
+        ++cpu.pc;
+        return 4;
+
+    case 0x8D: // adc a, l
+        cpu.a += cpu.l + (bool)(cpu.flags & CARRY_FLAG);
+        cpu.flags = (cpu.a < cpu.l ? CARRY_FLAG : 0) | (cpu.a ? 0 : ZERO_FLAG);
+        ++cpu.pc;
+        return 4;
+
+    case 0x8E: { // adc a, (hl)
+        byte b = memmap.read(cpu.hl);
+        cpu.a += b + (bool)(cpu.flags & CARRY_FLAG);
+        cpu.flags = (cpu.a < b ? CARRY_FLAG : 0) | (cpu.a ? 0 : ZERO_FLAG);
+        ++cpu.pc;
+        return 8;
+    }
+
+    case 0x8F: { // adc a, a
+        bool b = cpu.a & 0x80;
+        cpu.a <<= 1;
+        cpu.a += (bool)(cpu.flags & CARRY_FLAG);
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.a ? 0 : ZERO_FLAG);
+        ++cpu.pc;
+        return 4;
+    }
+
+    case 0x90: // sub b
+        cpu.a -= cpu.b;
+        cpu.flags = (cpu.a < cpu.b ? CARRY_FLAG : 0) | (cpu.a ? 0 : ZERO_FLAG) | ADDSUB_FLAG;
+        ++cpu.pc;
+        return 4;
+
+    case 0x91: // sub c
+        cpu.a -= cpu.c;
+        cpu.flags = (cpu.a < cpu.c ? 0 : CARRY_FLAG) | (cpu.a ? 0 : ZERO_FLAG) | ADDSUB_FLAG;
+        ++cpu.pc;
+        return 4;
+
+    case 0x92: // sub d
+        cpu.a -= cpu.d;
+        cpu.flags = (cpu.a < cpu.d ? 0 : CARRY_FLAG) | (cpu.a ? 0 : ZERO_FLAG) | ADDSUB_FLAG;
+        ++cpu.pc;
+        return 4;
+
+    case 0x93: // sub e
+        cpu.a -= cpu.e;
+        cpu.flags = (cpu.a < cpu.e ? 0 : CARRY_FLAG) | (cpu.a ? 0 : ZERO_FLAG) | ADDSUB_FLAG;
+        ++cpu.pc;
+        return 4;
+
+    case 0x94: // sub h
+        cpu.a -= cpu.h;
+        cpu.flags = (cpu.a < cpu.h ? 0 : CARRY_FLAG) | (cpu.a ? 0 : ZERO_FLAG) | ADDSUB_FLAG;
+        ++cpu.pc;
+        return 4;
+
+    case 0x95: // sub l
+        cpu.a -= cpu.l;
+        cpu.flags = (cpu.a < cpu.l ? 0 : CARRY_FLAG) | (cpu.a ? 0 : ZERO_FLAG) | ADDSUB_FLAG;
+        ++cpu.pc;
+        return 4;
+
+    case 0x96: { // sub (hl)
+        byte b = memmap.read(cpu.hl);
+        cpu.a -= b;
+        cpu.flags = (cpu.a < b ? 0 : CARRY_FLAG) | (cpu.a ? 0 : ZERO_FLAG) | ADDSUB_FLAG;
+        ++cpu.pc;
+        return 8;
+    }
+
+    case 0x97: // sub a
+        cpu.a = 0;
+        cpu.flags = ZERO_FLAG | ADDSUB_FLAG;
+        ++cpu.pc;
+        return 4;
+
+    case 0x98: // sbc a, b
+        cpu.a -= cpu.b + (bool)(cpu.flags & CARRY_FLAG);
+        cpu.flags = (cpu.a < cpu.b ? 0 : CARRY_FLAG) | (cpu.a ? 0 : ZERO_FLAG) | ADDSUB_FLAG;
+        ++cpu.pc;
+        return 4;
+
+    case 0x99: // sbc a, c
+        cpu.a -= cpu.c + (bool)(cpu.flags & CARRY_FLAG);
+        cpu.flags = (cpu.a < cpu.c ? 0 : CARRY_FLAG) | (cpu.a ? 0 : ZERO_FLAG) | ADDSUB_FLAG;
+        ++cpu.pc;
+        return 4;
+
+    case 0x9A: // sbc a, d
+        cpu.a -= cpu.d + (bool)(cpu.flags & CARRY_FLAG);
+        cpu.flags = (cpu.a < cpu.d ? 0 : CARRY_FLAG) | (cpu.a ? 0 : ZERO_FLAG) | ADDSUB_FLAG;
+        ++cpu.pc;
+        return 4;
+
+    case 0x9B: // sbc a, e
+        cpu.a -= cpu.e + (bool)(cpu.flags & CARRY_FLAG);
+        cpu.flags = (cpu.a < cpu.e ? 0 : CARRY_FLAG) | (cpu.a ? 0 : ZERO_FLAG) | ADDSUB_FLAG;
+        ++cpu.pc;
+        return 4;
+
+    case 0x9C: // sbc a, h
+        cpu.a -= cpu.h + (bool)(cpu.flags & CARRY_FLAG);
+        cpu.flags = (cpu.a < cpu.h ? 0 : CARRY_FLAG) | (cpu.a ? 0 : ZERO_FLAG) | ADDSUB_FLAG;
+        ++cpu.pc;
+        return 4;
+
+    case 0x9D: // sbc a, l
+        cpu.a -= cpu.l + (bool)(cpu.flags & CARRY_FLAG);
+        cpu.flags = (cpu.a < cpu.l ? 0 : CARRY_FLAG) | (cpu.a ? 0 : ZERO_FLAG) | ADDSUB_FLAG;
+        ++cpu.pc;
+        return 4;
+
+    case 0x9E: { // sbc a, (hl)
+        byte b = memmap.read(cpu.hl);
+        cpu.a -= b + (bool)(cpu.flags & CARRY_FLAG);
+        cpu.flags = (cpu.a < b ? 0 : CARRY_FLAG) | (cpu.a ? 0 : ZERO_FLAG) | ADDSUB_FLAG;
+        ++cpu.pc;
+        return 8;
+    }
+
+    case 0x9F: // sbc a, a
+        cpu.a = cpu.flags & CARRY_FLAG ? -1 : 0;
+        cpu.flags = ADDSUB_FLAG | cpu.a ? 0 : ZERO_FLAG | CARRY_FLAG | ADDSUB_FLAG;
+        ++cpu.pc;
+        return 4;
+
     case 0xA0: // and b
         cpu.a &= cpu.b;
         cpu.flags = HALFCARRY_FLAG | (cpu.a ? 0 : CARRY_FLAG);
@@ -733,6 +969,15 @@ long Emulator::execute() {
         cpu.pc = memmap.read_word(cpu.pc + 1);
         return 16;
 
+    case 0xC4: // call nz imm
+        if (cpu.flags & ZERO_FLAG) {
+            cpu.pc += 3;
+            return 12;
+        } else {
+            cpu.pc = memmap.read_word(cpu.pc + 1);
+            return 20;
+        }
+
     case 0xC5: // push bc
         memmap.write((--cpu.sp)--, cpu.bc);
         ++cpu.pc;
@@ -758,6 +1003,15 @@ long Emulator::execute() {
 
     case 0xCB: // bits
         return execute_bits();
+
+    case 0xCC: // call z imm
+        if (cpu.flags & ZERO_FLAG) {
+            cpu.pc = memmap.read_word(cpu.pc + 1);
+            return 20;
+        } else {
+            cpu.pc += 3;
+            return 12;
+        }
 
     case 0xCD: // call imm
         memmap.write_word((--cpu.sp)--, cpu.pc + 3);
@@ -786,6 +1040,15 @@ long Emulator::execute() {
     case 0xD3: // -
         std::cerr << "undefined opcode D3\n";
         while (1) { char c; std::cin >> c; }
+
+    case 0xD4: // call nc imm
+        if (cpu.flags & CARRY_FLAG) {
+            cpu.pc += 3;
+            return 12;
+        } else {
+            cpu.pc = memmap.read_word(cpu.pc + 1);
+            return 20;
+        }
 
     case 0xD5: // push de
         memmap.write((--cpu.sp)--, cpu.de);
@@ -823,6 +1086,15 @@ long Emulator::execute() {
         cpu.pc = memmap.read_word((++cpu.sp)++);
         interrupts.ime = true;
         return 16;
+
+    case 0xDC: // call c imm
+        if (cpu.flags & CARRY_FLAG) {
+            cpu.pc = memmap.read_word(cpu.pc + 1);
+            return 20;
+        } else {
+            cpu.pc += 3;
+            return 12;
+        }
 
     case 0xE0: // ld io[imm], a
         memmap.write(0xFF00 + memmap.read((++cpu.pc)++), cpu.a);
