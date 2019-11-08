@@ -9,7 +9,7 @@
 void display_callback(byte*);
 
 Emulator::Emulator(const std::string& file_path)
-    : cpu({ }), memmap(display, interrupts, input, file_path), interrupts(cpu, memmap), display(display_callback, interrupts) {
+    : cpu({ }), memmap(display, interrupts, timer, input, file_path), interrupts(cpu, memmap), display(memmap, interrupts, display_callback), timer(interrupts) {
     cpu.a = 0x11;
     cpu.sp = 0xFFFE;
     cpu.pc = 0x100;
@@ -35,10 +35,12 @@ void Emulator::run() {
     glfwMakeContextCurrent(window);
     setup_gl();
 
+    long cycles, total_cycles = 0;
     while (running) {
-        long cycles = execute();
-        interrupts.process();
+        total_cycles += cycles = execute();
         display.advance(cycles);
+        timer.update(cycles);
+        interrupts.process();
     }
 
     glfwTerminate();

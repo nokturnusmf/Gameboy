@@ -6,6 +6,7 @@
 #include "gb.h"
 #include "bank.h"
 #include "rom.h"
+#include "timer.h"
 
 class Display;
 class Interrupts;
@@ -13,7 +14,7 @@ class Input;
 
 class MemoryMap {
 public:
-    MemoryMap(Display& display, Interrupts& interrupts, Input& input, const std::string& file_path);
+    MemoryMap(Display& display, Interrupts& interrupts, Timer& timer, Input& input, const std::string& file_path);
 
     byte read(word address);
     word read_word(word address);
@@ -27,6 +28,7 @@ private:
 
     Display& display;
     Interrupts& interrupts;
+    Timer& timer;
     Input& input;
 
     BankedMemory<0xC000, 0x1000, 0x1000> ram;

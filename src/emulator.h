@@ -8,6 +8,7 @@
 #include "memmap.h"
 #include "interrupts.h"
 #include "display.h"
+#include "timer.h"
 #include "input.h"
 
 class Emulator {
@@ -24,5 +25,6 @@ private:
     MemoryMap memmap;
     Interrupts interrupts;
     Display display;
+    Timer timer;
     Input input;
 };

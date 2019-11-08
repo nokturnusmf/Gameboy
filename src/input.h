@@ -4,7 +4,7 @@
 
 class Input {
 public:
-    Input() : states{ 0 }, toggle(false) {}
+    Input() : toggle(false) {}
 
     enum Button {
         Down,
@@ -24,6 +24,6 @@ public:
     byte read() const;
 
 private:
-    bool states[8];
+    bool states[8] = { 1, 1, 1, 1, 1, 1, 1, 1 };
     bool toggle;
 };
