@@ -9,7 +9,6 @@ struct Pixel {
     byte r;
     byte g;
     byte b;
-    byte depth;
 };
 
 enum VideoMode {
@@ -26,6 +25,9 @@ struct LCDRegisters {
     byte scx;
     byte ly;
     byte lyc;
+    byte bgp;
+    byte obp0;
+    byte obp1;
     byte wy;
     byte wx;
     byte bgpi;
@@ -36,10 +38,7 @@ struct LCDRegisters {
 
 class Display {
 public:
-    Display(MemoryMap& memmap, Interrupts& interrupts, void(*display_callback)(byte*))
-        : memmap(memmap), interrupts(interrupts), display_callback(display_callback) {
-        regs.ly = 145;
-    }
+    Display(MemoryMap& memmap, Interrupts& interrupts, void(*display_callback)(byte*));
 
     void advance(long cycles);
 
@@ -62,9 +61,10 @@ private:
     void draw_sprites();
     void draw_sprite(int n);
 
-    void draw_pixel_line(word pixel, int x, int y, bool is_sprite);
+    void draw_pixel_line(word pixel, int x, int y, bool is_sprite, bool sprite_palette = false);
 
-    Pixel get_pixel(byte index);
+    Pixel get_pixel(byte index, bool is_sprite, bool sprite_palette = false);
+    Pixel map_pixel(byte index);
 
     void write_frame() ;
 
@@ -73,10 +73,11 @@ private:
 
     void(*display_callback)(byte*);
 
-    VideoMode mode = VideoMode::VBlank;
+    VideoMode mode;
     LCDRegisters regs;
 
-    Pixel pixels[160 * 144];
+    Pixel frame[160 * 144];
+    byte depth[160 * 144];
 
     long cycle_count = 0;
 };

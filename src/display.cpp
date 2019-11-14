@@ -19,6 +19,10 @@ static const byte SPRITE_SIZE = 0x04;
 static const byte SPRITE_ENABLE = 0x02;
 static const byte BG_ENABLE = 0x01;
 
+Display::Display(MemoryMap& memmap, Interrupts& interrupts, void(*display_callback)(byte*))
+    : memmap(memmap), interrupts(interrupts), display_callback(display_callback), regs{} {
+}
+
 void Display::advance(long cycles) {
     cycle_count += cycles;
     switch (mode) {
@@ -128,35 +132,41 @@ void Display::draw_line(int line) {
 
 void Display::draw_bg_line(int line) {
     word tile_map = regs.lcdc & BG_TILE_MAP ? 0x9C00 : 0x9800;
-    word tile_data = regs.lcdc & TILE_DATA_SELECT ? 0x8800 : 0x8000;
+    word tile_data = regs.lcdc & TILE_DATA_SELECT ? 0x8000 : 0x9000;
 
     byte row = line + regs.scy;
 
     for (int i = 0; i < 160 + 8; i += 8) {
         byte column = i + regs.scx;
 
-        byte tile_index = memmap.read(tile_map + row * 4 + column / 8);
-        word tile = memmap.read_word(tile_index);
+        int tile_index = memmap.read(tile_map + (row & ~7u) * 4 + column / 8);
+        if (tile_data == 0x9000 && tile_index >= 128) {
+            tile_index -= 256;
+        }
 
-        word data = memmap.read_word(tile_data + tile + row % 8);
+        word data = memmap.read_word(tile_data + tile_index * 16 + (row % 8) * 2);
 
-        draw_pixel_line(data, i - regs.scx, line, false);
+        draw_pixel_line(data, i, line, false);
     }
 }
 
 void Display::draw_window_line(int line) {
     word tile_map = regs.lcdc & WINDOW_TILE_MAP ? 0x9C00 : 0x9800;
-    word tile_data = regs.lcdc & TILE_DATA_SELECT ? 0x8800 : 0x8000;
+    word tile_data = regs.lcdc & TILE_DATA_SELECT ? 0x8000 : 0x9000;
 
     byte row = line + regs.wy;
 
-    for (int i = -7; i < 160; i += 8) {
-        byte column = i + regs.wx;
+    for (int i = 0; i < 160 + 8; i += 8) {
+        byte column = i + regs.wx - 7;
 
-        byte tile_index = memmap.read(tile_map + row * 4 + column / 8);
-        word tile = memmap.read_word(tile_data + tile_index + row % 8);
+        int tile_index = memmap.read(tile_map + (row & ~7u) * 4 + column / 8);
+        if (tile_data == 0x9000 && tile_index >= 128) {
+            tile_index -= 256;
+        }
 
-        draw_pixel_line(tile, i - regs.wx, line, false);
+        word data = memmap.read_word(tile_data + tile_index * 16 + (row % 8) * 2);
+
+        draw_pixel_line(data, i, line, false);
     }
 }
 
@@ -172,17 +182,18 @@ void Display::draw_sprite(int n) {
     byte y = memmap.read(0xFE00 + n * 4);
     byte x = memmap.read(0xFE01 + n * 4);
     byte tile_index = memmap.read(0xFE02 + n * 4);
-    // byte attr = memmap.read(0xFE03 + n * 4);
+    byte attr = memmap.read(0xFE03 + n * 4);
 
-    if (y == 0 || y >= 160 || x == 0 || x > 168) return;
+    if (y == 0 || y >= 144 || x == 0 || x > 168) return;
 
     for (int i = 0; i < 8; ++i) {
-        word data = memmap.read_word(0x8000 + 2 * tile_index);
-        draw_pixel_line(data, x, y + i, true);
+        word data = memmap.read_word(0x8000 + tile_index * 16 +  i * 2);
+        // TODO y flip read upside down, x flip swap bits of data
+        draw_pixel_line(data, x - 8, y + i - 16, true, attr & 0x10);
     }
 }
 
-void Display::draw_pixel_line(word pixel, int x, int y, bool is_sprite) {
+void Display::draw_pixel_line(word pixel, int x, int y, bool is_sprite, bool sprite_palette) {
     if (y < 0 || y >= 144) return;
 
     byte upper = pixel >> 8, lower = pixel;
@@ -195,48 +206,35 @@ void Display::draw_pixel_line(word pixel, int x, int y, bool is_sprite) {
 
         if (is_sprite && !color) continue;
 
-        Pixel p = get_pixel(color);
-        pixels[y * 160 + x + i] = p;
+        frame[y * 160 + x + i] = get_pixel(color, is_sprite, sprite_palette);
+        // TODO depth
     }
 }
 
-Pixel Display::get_pixel(byte index) {
+inline Pixel Display::get_pixel(byte index, bool is_sprite, bool sprite_palette) {
+    byte palette = is_sprite ? sprite_palette ? regs.obp1 : regs.obp0 : regs.bgp;
+    return map_pixel((palette & (0b11 << index * 2)) >> index * 2);
+}
+
+Pixel Display::map_pixel(byte index) {
     switch (index) {
     case 0:
-        return { 0, 0, 0, 0 };
+        return { 255, 255, 255 };
     case 1:
-        return { 64, 64, 64, 0 };
+        return { 144, 144, 144 };
     case 2:
-        return { 144, 144, 144, 0 };
+        return { 64, 64, 64 };
     case 3:
-        return { 255, 255, 255, 0 };
+        return { 0, 0, 0 };
     }
     throw index;
 }
 
 void Display::write_frame()  {
-    for (int i = 0; i < 144; ++i) {
-        for (int j = 0; j < 160; ++j) {
-            // draw_pixel_line((i + j) * i * j, j, i, false);
-        }
-    }
-
-    byte frame[160 * 144 * 3];
-    for (int i = 0; i < 160 * 144; ++i) {
-        Pixel p = pixels[i];
-        frame[i * 3 + 0] = p.r;
-        frame[i * 3 + 1] = p.g;
-        frame[i * 3 + 2] = p.b;
-    }
-    display_callback(frame);
+    display_callback(reinterpret_cast<byte*>(frame));
 }
 
-#include <iostream>
-#include <iomanip>
-
 byte Display::read_io(word address) {
-    if (address == 0xFF44) return regs.ly;
-    std::cout << "lcd read " << std::hex << address << '\n';
     switch (address & 0xFF) {
     case 0x40:
         return regs.lcdc;
@@ -250,6 +248,12 @@ byte Display::read_io(word address) {
         return regs.ly;
     case 0x45:
         return regs.lyc;
+    case 0x47:
+        return regs.bgp;
+    case 0x48:
+        return regs.obp0;
+    case 0x49:
+        return regs.obp1;
     case 0x4A:
         return regs.wy;
     case 0x4B:
@@ -263,13 +267,12 @@ byte Display::read_io(word address) {
     case 0x6B:
         return regs.obpd;
     default:
-        std::cerr << "lcd invalid read " << address << '\n';
+        // std::cerr << "lcd invalid read " << address << '\n';
         return 0;
     }
 }
 
 void Display::write_io(word address, byte value) {
-    std::cout << "lcd write " << std::hex << address << ' ' << (int)value << '\n';
     switch (address & 0xFF) {
     case 0x40:
         regs.lcdc = value;
@@ -288,6 +291,15 @@ void Display::write_io(word address, byte value) {
         break;
     case 0x45:
         regs.lyc = value;
+        break;
+    case 0x47:
+        regs.bgp = value;
+        break;
+    case 0x48:
+        regs.obp0 = value;
+        break;
+    case 0x49:
+        regs.obp1 = value;
         break;
     case 0x4A:
         regs.wy = value;
@@ -308,6 +320,7 @@ void Display::write_io(word address, byte value) {
         regs.obpd = value;
         break;
     default:
-        std::cerr << "lcd invalid write " << address << ' ' << (int)value << '\n';
+        // std::cerr << "lcd invalid write " << address << ' ' << (int)value << '\n';
+        ;
     }
 }
