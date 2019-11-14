@@ -10,9 +10,6 @@ void display_callback(byte*);
 
 Emulator::Emulator(const std::string& file_path)
     : cpu({ }), memmap(display, interrupts, timer, input, file_path), interrupts(cpu, memmap), display(memmap, interrupts, display_callback), timer(interrupts) {
-    cpu.a = 0x11;
-    cpu.sp = 0xFFFE;
-    cpu.pc = 0x100;
 }
 
 #include "gl.impl"

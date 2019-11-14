@@ -3,6 +3,7 @@
 #include "display.h"
 #include "interrupts.h"
 #include "input.h"
+#include "boot.h"
 
 MemoryMap::MemoryMap(Display& display, Interrupts& interrupts, Timer& timer, Input& input, const std::string& file_path)
     : display(display), interrupts(interrupts), timer(timer), input(input), ram(0x8000), vram(0x4000), oam(160), hram(127), rom(file_path) {
@@ -10,7 +11,9 @@ MemoryMap::MemoryMap(Display& display, Interrupts& interrupts, Timer& timer, Inp
 }
 
 byte MemoryMap::read(word address) {
-    if (address < 0x8000) {
+    if (boot && address < 0x100) {
+        return bootrom[address];
+    } if (address < 0x8000) {
         return rom.read(address);
     } else if (address < 0xA000) {
         return vram[address];
@@ -70,6 +73,7 @@ void MemoryMap::write_word(word address, word value) {
 #include <iomanip>
 
 byte MemoryMap::read_ctrl(word address) {
+    // std::cout << "read ctrl " << std::hex << address << '\n';
     switch (address & 0xFF) {
     case 0x00:
         return input.read();
@@ -89,6 +93,9 @@ byte MemoryMap::read_ctrl(word address) {
     case 0x43:
     case 0x44:
     case 0x45:
+    case 0x47:
+    case 0x48:
+    case 0x49:
     case 0x4A:
     case 0x4B:
     case 0x68:
@@ -97,12 +104,12 @@ byte MemoryMap::read_ctrl(word address) {
     case 0x6B:
         return display.read_io(address);
     default:
-        std::cout << "read ctrl " << std::hex << address << '\n';
         return 0;
     }
 }
 
 void MemoryMap::write_ctrl(word address, byte value) {
+    // std::cout << "write ctrl " << std::hex << address << ' ' << (int)value << '\n';
     switch (address & 0xFF) {
     case 0x00:
         input.write(value);
@@ -116,6 +123,9 @@ void MemoryMap::write_ctrl(word address, byte value) {
     case 0x43:
     case 0x44:
     case 0x45:
+    case 0x47:
+    case 0x48:
+    case 0x49:
     case 0x4A:
     case 0x4B:
     case 0x68:
@@ -134,8 +144,10 @@ void MemoryMap::write_ctrl(word address, byte value) {
     case 0x4F:
         vram.set_bank(value);
         break;
+    case 0x50:
+        boot = false;
+        break;
     default:
-        std::cout << "write ctrl " << std::hex << address << ' ' << (int)value << '\n';
         break;
     }
 }
