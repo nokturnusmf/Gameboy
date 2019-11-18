@@ -5,8 +5,6 @@ long Emulator::execute() {
         return 4;
     }
 
-    std::cout << std::hex << (int)cpu.pc << '\n';
-
     byte op = memmap.read(cpu.pc);
     switch (op) {
     case 0: // nop
@@ -1063,12 +1061,14 @@ long Emulator::execute() {
             ++cpu.pc;
             return 8;
         } else {
-            cpu.pc = memmap.read_word((++cpu.sp)++);
+            cpu.pc = memmap.read_word(cpu.sp);
+            cpu.sp += 2;
             return 12;
         }
 
     case 0xC1: // pop bc
-        cpu.bc = memmap.read_word((++cpu.sp)++);
+        cpu.bc = memmap.read_word(cpu.sp);
+        cpu.sp += 2;
         ++cpu.pc;
         return 12;
 
@@ -1089,13 +1089,13 @@ long Emulator::execute() {
             cpu.pc += 3;
             return 12;
         } else {
-            memmap.write_word((--cpu.sp)--, cpu.pc + 3);
+            memmap.write_word(cpu.sp -= 2, cpu.pc + 3);
             cpu.pc = memmap.read_word(cpu.pc + 1);
             return 20;
         }
 
     case 0xC5: // push bc
-        memmap.write_word((--cpu.sp)--, cpu.bc);
+        memmap.write_word(cpu.sp -= 2, cpu.bc);
         ++cpu.pc;
         return 16;
 
@@ -1107,13 +1107,14 @@ long Emulator::execute() {
     }
 
     case 0xC7: // rst 0x00
-        memmap.write_word((--cpu.sp)--, cpu.pc + 1);
+        memmap.write_word(cpu.sp -= 2, cpu.pc + 1);
         cpu.pc = 0x00;
         return 16;
 
     case 0xC8: // ret z
         if (cpu.flags & ZERO_FLAG) {
-            cpu.pc = memmap.read_word((++cpu.sp)++);
+            cpu.pc = memmap.read_word(cpu.sp);
+            cpu.sp += 2;
             return 12;
         } else {
             ++cpu.pc;
@@ -1121,7 +1122,8 @@ long Emulator::execute() {
         }
 
     case 0xC9: // ret
-        cpu.pc = memmap.read_word((++cpu.sp)++);
+        cpu.pc = memmap.read_word(cpu.sp);
+        cpu.sp += 2;
         return 16;
 
     case 0xCA: // jp z imm
@@ -1137,7 +1139,7 @@ long Emulator::execute() {
 
     case 0xCC: // call z imm
         if (cpu.flags & ZERO_FLAG) {
-            memmap.write_word((--cpu.sp)--, cpu.pc + 3);
+            memmap.write_word(cpu.sp -= 2, cpu.pc + 3);
             cpu.pc = memmap.read_word(cpu.pc + 1);
             return 20;
         } else {
@@ -1146,7 +1148,7 @@ long Emulator::execute() {
         }
 
     case 0xCD: // call imm
-        memmap.write_word((--cpu.sp)--, cpu.pc + 3);
+        memmap.write_word(cpu.sp -= 2, cpu.pc + 3);
         cpu.pc = memmap.read_word(cpu.pc + 1);
         return 24;
 
@@ -1158,7 +1160,7 @@ long Emulator::execute() {
     }
 
     case 0xCF: // rst 0x08
-        memmap.write_word((--cpu.sp)--, cpu.pc + 1);
+        memmap.write_word(cpu.sp -= 2, cpu.pc + 1);
         cpu.pc = 0x08;
         return 16;
 
@@ -1167,12 +1169,14 @@ long Emulator::execute() {
             ++cpu.pc;
             return 8;
         } else {
-            cpu.pc = memmap.read_word((++cpu.sp)++);
+            cpu.pc = memmap.read_word(cpu.sp);
+            cpu.sp += 2;
             return 12;
         }
 
     case 0xD1: // pop de
-        cpu.de = memmap.read_word((++cpu.sp)++);
+        cpu.de = memmap.read_word(cpu.sp);
+        cpu.sp += 2;
         ++cpu.pc;
         return 12;
 
@@ -1193,13 +1197,13 @@ long Emulator::execute() {
             cpu.pc += 3;
             return 12;
         } else {
-            memmap.write_word((--cpu.sp)--, cpu.pc + 3);
+            memmap.write_word(cpu.sp -= 2, cpu.pc + 3);
             cpu.pc = memmap.read_word(cpu.pc + 1);
             return 20;
         }
 
     case 0xD5: // push de
-        memmap.write_word((--cpu.sp)--, cpu.de);
+        memmap.write_word(cpu.sp -= 2, cpu.de);
         ++cpu.pc;
         return 16;
 
@@ -1211,13 +1215,14 @@ long Emulator::execute() {
     }
 
     case 0xD7: // rst 0x10
-        memmap.write_word((--cpu.sp)--, cpu.pc + 1);
+        memmap.write_word(cpu.sp -= 2, cpu.pc + 1);
         cpu.pc = 0x10;
         return 16;
 
     case 0xD8: // ret c
         if (cpu.flags & CARRY_FLAG) {
-            cpu.pc = memmap.read_word((++cpu.sp)++);
+            cpu.pc = memmap.read_word(cpu.sp);
+            cpu.sp += 2;
             return 12;
         } else {
             ++cpu.pc;
@@ -1225,7 +1230,8 @@ long Emulator::execute() {
         }
 
     case 0xD9: // reti
-        cpu.pc = memmap.read_word((++cpu.sp)++);
+        cpu.pc = memmap.read_word(cpu.sp);
+        cpu.sp += 2;
         interrupts.ime = true;
         return 16;
 
@@ -1243,7 +1249,7 @@ long Emulator::execute() {
 
     case 0xDC: // call c imm
         if (cpu.flags & CARRY_FLAG) {
-            memmap.write_word((--cpu.sp)--, cpu.pc + 3);
+            memmap.write_word(cpu.sp -= 2, cpu.pc + 3);
             cpu.pc = memmap.read_word(cpu.pc + 1);
             return 20;
         } else {
@@ -1263,7 +1269,7 @@ long Emulator::execute() {
     }
 
     case 0xDF: // rst 0x18
-        memmap.write_word((--cpu.sp)--, cpu.pc + 1);
+        memmap.write_word(cpu.sp -= 2, cpu.pc + 1);
         cpu.pc = 0x18;
         return 16;
 
@@ -1272,7 +1278,8 @@ long Emulator::execute() {
         return 12;
 
     case 0xE1: // pop hl
-        cpu.hl = memmap.read_word((++cpu.sp)++);
+        cpu.hl = memmap.read_word(cpu.sp);
+        cpu.sp += 2;
         ++cpu.pc;
         return 12;
 
@@ -1290,7 +1297,7 @@ long Emulator::execute() {
         while (1) { char c; std::cin >> c; }
 
     case 0xE5: // push hl
-        memmap.write_word((--cpu.sp)--, cpu.hl);
+        memmap.write_word(cpu.sp -= 2, cpu.hl);
         ++cpu.pc;
         return 16;
 
@@ -1300,7 +1307,7 @@ long Emulator::execute() {
         return 8;
 
     case 0xE7: // rst 0x20
-        memmap.write_word((--cpu.sp)--, cpu.pc + 1);
+        memmap.write_word(cpu.sp -= 2, cpu.pc + 1);
         cpu.pc = 0x20;
         return 16;
 
@@ -1335,7 +1342,7 @@ long Emulator::execute() {
         return 8;
 
     case 0xEF: // rst 0x28
-        memmap.write_word((--cpu.sp)--, cpu.pc + 1);
+        memmap.write_word(cpu.sp -= 2, cpu.pc + 1);
         cpu.pc = 0x28;
         return 16;
 
@@ -1344,7 +1351,8 @@ long Emulator::execute() {
         return 12;
 
     case 0xF1: // pop af
-        cpu.af = memmap.read_word((++cpu.sp)++);
+        cpu.af = memmap.read_word(cpu.sp);
+        cpu.sp += 2;
         ++cpu.pc;
         return 12;
 
@@ -1363,7 +1371,7 @@ long Emulator::execute() {
         while (1) { char c; std::cin >> c; }
 
     case 0xF5: // push af
-        memmap.write_word((--cpu.sp)--, cpu.af);
+        memmap.write_word(cpu.sp -= 2, cpu.af);
         ++cpu.pc;
         return 16;
 
@@ -1372,7 +1380,7 @@ long Emulator::execute() {
         return 8;
 
     case 0xF7: // rst 0x30
-        memmap.write_word((--cpu.sp)--, cpu.pc + 1);
+        memmap.write_word(cpu.sp -= 2, cpu.pc + 1);
         cpu.pc = 0x30;
         return 16;
 
@@ -1410,7 +1418,7 @@ long Emulator::execute() {
     }
 
     case 0xFF: // rst 0x38
-        memmap.write_word((--cpu.sp)--, cpu.pc + 1);
+        memmap.write_word(cpu.sp -= 2, cpu.pc + 1);
         cpu.pc = 0x38;
         return 16;
 

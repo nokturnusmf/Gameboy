@@ -4,7 +4,7 @@
 #include "memmap.h"
 
 static void do_call(CPU& cpu, MemoryMap& memmap, word address) {
-    memmap.write_word((--cpu.sp)--, cpu.pc);
+    memmap.write_word(cpu.sp -= 2, cpu.pc);
     cpu.pc = address;
 }
 
