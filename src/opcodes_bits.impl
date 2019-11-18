@@ -3,338 +3,462 @@
 long Emulator::execute_bits() {
     byte op = memmap.read((++cpu.pc)++);
 
-    // std::cout << "bits: " << std::hex << (int)op << '\n';
-
     switch (op) {
+    case 0x00: { // rlc b
+        bool b = cpu.b & 0x80;
+        cpu.b = (cpu.b << 1) | b;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.b ? 0 : ZERO_FLAG);
+        return 8;
+    }
+
+    case 0x01: { // rlc c
+        bool b = cpu.c & 0x80;
+        cpu.c = (cpu.c << 1) | b;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.c ? 0 : ZERO_FLAG);
+        return 8;
+    }
+
+    case 0x02: { // rlc d
+        bool b = cpu.d & 0x80;
+        cpu.d = (cpu.d << 1) | b;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.d ? 0 : ZERO_FLAG);
+        return 8;
+    }
+
+    case 0x03: { // rlc e
+        bool b = cpu.e & 0x80;
+        cpu.e = (cpu.e << 1) | b;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.e ? 0 : ZERO_FLAG);
+        return 8;
+    }
+
+    case 0x04: { // rlc h
+        bool b = cpu.h & 0x80;
+        cpu.h = (cpu.h << 1) | b;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.h ? 0 : ZERO_FLAG);
+        return 8;
+    }
+
+    case 0x05: { // rlc l
+        bool b = cpu.l & 0x80;
+        cpu.l = (cpu.l << 1) | b;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.l ? 0 : ZERO_FLAG);
+        return 8;
+    }
+
+    case 0x06: { // rlc (hl)
+        byte v = memmap.read(cpu.hl);
+        bool b = v & 0x80;
+        memmap.write(cpu.hl, v = (v << 1) | b);
+        cpu.flags = (b ? CARRY_FLAG : 0) | (v ? 0 : ZERO_FLAG);
+        return 16;
+    }
+
+    case 0x07: { // rlc a
+        bool b = cpu.a & 0x80;
+        cpu.a = (cpu.a << 1) | b;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.a ? 0 : ZERO_FLAG);
+        return 8;
+    }
+
+    case 0x08: { // rrc b
+        bool b = cpu.b & 1;
+        cpu.b = (cpu.b >> 1) | (b ? 0x80 : 0);
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.b ? 0 : ZERO_FLAG);
+        return 8;
+    }
+
+    case 0x09: { // rrc c
+        bool b = cpu.c & 1;
+        cpu.c = (cpu.c >> 1) | (b ? 0x80 : 0);
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.c ? 0 : ZERO_FLAG);
+        return 8;
+    }
+
+    case 0x0A: { // rrc d
+        bool b = cpu.d & 1;
+        cpu.d = (cpu.d >> 1) | (b ? 0x80 : 0);
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.d ? 0 : ZERO_FLAG);
+        return 8;
+    }
+
+    case 0x0B: { // rrc e
+        bool b = cpu.e & 1;
+        cpu.e = (cpu.e >> 1) | (b ? 0x80 : 0);
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.e ? 0 : ZERO_FLAG);
+        return 8;
+    }
+
+    case 0x0C: { // rrc h
+        bool b = cpu.h & 1;
+        cpu.h = (cpu.h >> 1) | (b ? 0x80 : 0);
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.h ? 0 : ZERO_FLAG);
+        return 8;
+    }
+
+    case 0x0D: { // rrc l
+        bool b = cpu.l & 1;
+        cpu.l = (cpu.l >> 1) | (b ? 0x80 : 0);
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.l ? 0 : ZERO_FLAG);
+        return 8;
+    }
+
+    case 0x0E: { // rrc (hl)
+        byte v = memmap.read(cpu.hl);
+        bool b = v & 1;
+        memmap.write(cpu.hl, v = (v >> 1) | (b ? 0x80 : 0));
+        cpu.flags = (b ? CARRY_FLAG : 0) | (v ? 0 : ZERO_FLAG);
+        return 16;
+    }
+
+    case 0x0F: { // rrc a
+        bool b = cpu.a & 1;
+        cpu.a = (cpu.a >> 1) | (b ? 0x80 : 0);
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.a ? 0 : ZERO_FLAG);
+        return 8;
+    }
+
     case 0x10: { // rl b
         bool b = cpu.b & 0x80;
         cpu.b = cpu.b << 1 | (bool)(cpu.flags & CARRY_FLAG);
-        if (b) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.b ? 0 : ZERO_FLAG);
         return 8;
     }
 
     case 0x11: { // rl c
         bool b = cpu.c & 0x80;
         cpu.c = cpu.c << 1 | (bool)(cpu.flags & CARRY_FLAG);
-        if (b) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.c ? 0 : ZERO_FLAG);
         return 8;
     }
 
     case 0x12: { // rl d
         bool b = cpu.d & 0x80;
         cpu.d = cpu.d << 1 | (bool)(cpu.flags & CARRY_FLAG);
-        if (b) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.d ? 0 : ZERO_FLAG);
         return 8;
     }
 
     case 0x13: { // rl e
         bool b = cpu.e & 0x80;
         cpu.e = cpu.e << 1 | (bool)(cpu.flags & CARRY_FLAG);
-        if (b) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.e ? 0 : ZERO_FLAG);
         return 8;
     }
 
     case 0x14: { // rl h
         bool b = cpu.h & 0x80;
         cpu.h = cpu.h << 1 | (bool)(cpu.flags & CARRY_FLAG);
-        if (b) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.h ? 0 : ZERO_FLAG);
         return 8;
     }
 
     case 0x15: { // rl l
         bool b = cpu.l & 0x80;
         cpu.l = cpu.l << 1 | (bool)(cpu.flags & CARRY_FLAG);
-        if (b) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.l ? 0 : ZERO_FLAG);
         return 8;
     }
 
     case 0x16: { // rl (hl)
         byte v = memmap.read(cpu.hl);
         bool b = v & 0x80;
-        memmap.write(cpu.hl, v << 1 | (bool)(cpu.flags & CARRY_FLAG));
-        if (b) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+        memmap.write(cpu.hl, v <<= 1 | (bool)(cpu.flags & CARRY_FLAG));
+        cpu.flags = (b ? CARRY_FLAG : 0) | (v ? 0 : ZERO_FLAG);
         return 8;
     }
 
     case 0x17: { // rl a
         bool b = cpu.a & 0x80;
         cpu.a = cpu.a << 1 | (bool)(cpu.flags & CARRY_FLAG);
-        if (b) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.a ? 0 : ZERO_FLAG);
         return 8;
     }
 
     case 0x18: { // rr b
         bool b = cpu.b & 1;
         cpu.b = cpu.b >> 1 | (cpu.flags & CARRY_FLAG ? 0x80 : 0);
-        if (b) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.b ? 0 : ZERO_FLAG);
         return 8;
     }
 
     case 0x19: { // rr c
         bool b = cpu.c & 1;
         cpu.c = cpu.c >> 1 | (cpu.flags & CARRY_FLAG ? 0x80 : 0);
-        if (b) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.c ? 0 : ZERO_FLAG);
         return 8;
     }
 
     case 0x1A: { // rr d
         bool b = cpu.d & 1;
         cpu.d = cpu.d >> 1 | (cpu.flags & CARRY_FLAG ? 0x80 : 0);
-        if (b) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.d ? 0 : ZERO_FLAG);
         return 8;
     }
 
     case 0x1B: { // rr e
         bool b = cpu.e & 1;
         cpu.e = cpu.e >> 1 | (cpu.flags & CARRY_FLAG ? 0x80 : 0);
-        if (b) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.e ? 0 : ZERO_FLAG);
         return 8;
     }
 
     case 0x1C: { // rr h
         bool b = cpu.h & 1;
         cpu.h = cpu.h >> 1 | (cpu.flags & CARRY_FLAG ? 0x80 : 0);
-        if (b) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.h ? 0 : ZERO_FLAG);
         return 8;
     }
 
     case 0x1D: { // rr l
         bool b = cpu.l & 1;
         cpu.l = cpu.l >> 1 | (cpu.flags & CARRY_FLAG ? 0x80 : 0);
-        if (b) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.l ? 0 : ZERO_FLAG);
         return 8;
     }
 
     case 0x1E: { // rr (hl)
         byte v = memmap.read(cpu.hl);
         bool b = v & 1;
-        memmap.write(cpu.hl, v >> 1 | (cpu.flags & CARRY_FLAG ? 0x80 : 0));
-        if (b) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+        memmap.write(cpu.hl, v >>= 1 | (cpu.flags & CARRY_FLAG ? 0x80 : 0));
+        cpu.flags = (b ? CARRY_FLAG : 0) | (v ? 0 : ZERO_FLAG);
         return 16;
     }
 
-    case 0x1F: { // rra
+    case 0x1F: { // rr a
         bool b = cpu.a & 1;
         cpu.a = cpu.a >> 1 | (cpu.flags & CARRY_FLAG ? 0x80 : 0);
-        if (b) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.a ? 0 : ZERO_FLAG);
         return 8;
     }
 
-    case 0x20: // sla b
-        if (cpu.b & 0x80) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+    case 0x20: { // sla b
+        bool b = cpu.b & 0x80;
         cpu.b <<= 1;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.b ? 0 : ZERO_FLAG);
         return 8;
+    }
 
-    case 0x21: // sla c
-        if (cpu.c & 0x80) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+    case 0x21: { // sla b
+        bool b = cpu.c & 0x80;
         cpu.c <<= 1;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.c ? 0 : ZERO_FLAG);
         return 8;
+    }
 
-    case 0x22: // sla d
-        if (cpu.d & 0x80) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+    case 0x22: { // sla d
+        bool b = cpu.d & 0x80;
         cpu.d <<= 1;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.d ? 0 : ZERO_FLAG);
         return 8;
+    }
 
-    case 0x23: // sla e
-        if (cpu.e & 0x80) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+    case 0x23: { // sla e
+        bool b = cpu.e & 0x80;
         cpu.e <<= 1;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.e ? 0 : ZERO_FLAG);
         return 8;
+    }
 
-    case 0x24: // sla h
-        if (cpu.h & 0x80) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+    case 0x24: { // sla h
+        bool b = cpu.h & 0x80;
         cpu.h <<= 1;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.h ? 0 : ZERO_FLAG);
         return 8;
+    }
 
-    case 0x25: // sla l
-        if (cpu.l & 0x80) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+    case 0x25: { // sla l
+        bool b = cpu.l & 0x80;
         cpu.l <<= 1;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.l ? 0 : ZERO_FLAG);
         return 8;
+    }
 
     case 0x26: { // sla (hl)
-        byte b = memmap.read(cpu.hl);
-        if (b & 0x80) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
-        memmap.write(cpu.hl, b << 1);
+        byte v = memmap.read(cpu.hl);
+        bool b = v & 0x80;
+        memmap.write(cpu.hl, v <<= 1);
+        cpu.flags = (b ? CARRY_FLAG : 0) | (v ? 0 : ZERO_FLAG);
         return 16;
     }
 
-    case 0x27: // sla a
-        if (cpu.a & 0x80) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+    case 0x27: { // sla a
+        bool b = cpu.a & 0x80;
         cpu.a <<= 1;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.a ? 0 : ZERO_FLAG);
         return 8;
+    }
 
-    case 0x28: // sra b
-        if (cpu.b & 1) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+    case 0x28: { // sra b
+        bool b = cpu.b & 1;
         cpu.b = (cpu.b >> 1) | (cpu.b & 0x80);
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.b ? 0 : ZERO_FLAG);
         return 8;
+    }
 
-    case 0x29: // sra c
-        if (cpu.c & 1) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+    case 0x29: { // sra c
+        bool b = cpu.c & 1;
         cpu.c = (cpu.c >> 1) | (cpu.c & 0x80);
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.c ? 0 : ZERO_FLAG);
         return 8;
+    }
 
-    case 0x2A: // sra d
-        if (cpu.d & 1) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+    case 0x2A: { // sra d
+        bool b = cpu.d & 1;
         cpu.d = (cpu.d >> 1) | (cpu.d & 0x80);
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.d ? 0 : ZERO_FLAG);
         return 8;
+    }
 
-    case 0x2B: // sra e
-        if (cpu.e & 1) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+    case 0x2B: { // sra e
+        bool b = cpu.e & 1;
         cpu.e = (cpu.e >> 1) | (cpu.e & 0x80);
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.e ? 0 : ZERO_FLAG);
         return 8;
+    }
 
-    case 0x2C: // sra h
-        if (cpu.h & 1) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+    case 0x2C: { // sra h
+        bool b = cpu.h & 1;
         cpu.h = (cpu.h >> 1) | (cpu.h & 0x80);
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.h ? 0 : ZERO_FLAG);
         return 8;
+    }
 
-    case 0x2D: // sra l
-        if (cpu.l & 1) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+    case 0x2D: { // sra l
+        bool b = cpu.l & 1;
         cpu.l = (cpu.l >> 1) | (cpu.l & 0x80);
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.l ? 0 : ZERO_FLAG);
         return 8;
+    }
 
     case 0x2E: { // sra (hl)
-        byte b = memmap.read(cpu.hl);
-        if (b & 1) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
-        memmap.write(cpu.hl, (b >> 1) | (b & 0x80));
+        byte v = memmap.read(cpu.hl);
+        bool b = v & 1;
+        memmap.write(cpu.hl, v = (v >> 1) | (v & 0x80));
+        cpu.flags = (b ? CARRY_FLAG : 0) | (v ? 0 : ZERO_FLAG);
         return 16;
     }
 
-    case 0x2F: // sra a
-        if (cpu.a & 1) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+    case 0x2F: { // sra a
+        bool b = cpu.a & 1;
         cpu.a = (cpu.a >> 1) | (cpu.a & 0x80);
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.a ? 0 : ZERO_FLAG);
         return 8;
+    }
 
-    case 0x30: // sll b
-        if (cpu.b & 0x80) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+    case 0x30: { // sll b
+        bool b = cpu.b & 0x80;
         cpu.b = (cpu.b << 1) + 1;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.b ? 0 : ZERO_FLAG);
         return 8;
+    }
 
-    case 0x31: // sll c
-        if (cpu.c & 0x80) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+    case 0x31: { // sll c
+        bool b = cpu.c & 0x80;
         cpu.c = (cpu.c << 1) + 1;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.c ? 0 : ZERO_FLAG);
         return 8;
+    }
 
-    case 0x32: // sll d
-        if (cpu.d & 0x80) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+    case 0x32: { // sll d
+        bool b = cpu.d & 0x80;
         cpu.d = (cpu.d << 1) + 1;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.d ? 0 : ZERO_FLAG);
         return 8;
+    }
 
-    case 0x33: // sll e
-        if (cpu.e & 0x80) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+    case 0x33: { // sll e
+        bool b = cpu.e & 0x80;
         cpu.e = (cpu.e << 1) + 1;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.e ? 0 : ZERO_FLAG);
         return 8;
+    }
 
-    case 0x34: // sll h
-        if (cpu.h & 0x80) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+    case 0x34: { // sll h
+        bool b = cpu.h & 0x80;
         cpu.h = (cpu.h << 1) + 1;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.h ? 0 : ZERO_FLAG);
         return 8;
+    }
 
-    case 0x35: // sll l
-        if (cpu.l & 0x80) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+    case 0x35: { // sll l
+        bool b = cpu.l & 0x80;
         cpu.l = (cpu.l << 1) + 1;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.l ? 0 : ZERO_FLAG);
         return 8;
+    }
 
     case 0x36: { // sll (hl)
-        byte b = memmap.read(cpu.hl);
-        if (b & 0x80) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
-        memmap.write(cpu.hl, (b << 1) + 1);
+        byte v = memmap.read(cpu.hl);
+        bool b = v & 0x80;
+        memmap.write(cpu.hl, (v <<= 1) += 1);
+        cpu.flags = (b ? CARRY_FLAG : 0) | (v ? 0 : ZERO_FLAG);
         return 16;
     }
 
-    case 0x37: // sll a
-        if (cpu.a & 0x80) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+    case 0x37: { // sll a
+        bool b = cpu.a & 0x80;
         cpu.a = (cpu.a << 1) + 1;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.a ? 0 : ZERO_FLAG);
         return 8;
+    }
 
-    case 0x38: // srl b
-        if (cpu.b & 1) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+    case 0x38: { // srl b
+        bool b = cpu.b & 1;
         cpu.b >>= 1;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.b ? 0 : ZERO_FLAG);
         return 8;
+    }
 
-    case 0x39: // srl c
-        if (cpu.c & 1) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+    case 0x39: { // srl c
+        bool b = cpu.c & 1;
         cpu.c >>= 1;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.c ? 0 : ZERO_FLAG);
         return 8;
+    }
 
-    case 0x3A: // srl d
-        if (cpu.d & 1) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+    case 0x3A: { // srl d
+        bool b = cpu.d & 1;
         cpu.d >>= 1;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.d ? 0 : ZERO_FLAG);
         return 8;
+    }
 
-    case 0x3B: // srl e
-        if (cpu.e & 1) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+    case 0x3B: { // srl e
+        bool b = cpu.e & 1;
         cpu.e >>= 1;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.e ? 0 : ZERO_FLAG);
         return 8;
+    }
 
-    case 0x3C: // srl h
-        if (cpu.h & 1) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+    case 0x3C: { // srl h
+        bool b = cpu.h & 1;
         cpu.h >>= 1;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.h ? 0 : ZERO_FLAG);
         return 8;
+    }
 
-    case 0x3D: // srl l
-        if (cpu.l & 1) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+    case 0x3D: { // srl l
+        bool b = cpu.l & 1;
         cpu.l >>= 1;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.l ? 0 : ZERO_FLAG);
         return 8;
+    }
 
     case 0x3E: { // srl (hl)
-        byte b = memmap.read(cpu.hl);
-        if (b & 1) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
-        memmap.write(cpu.hl, b >> 1);
+        byte v = memmap.read(cpu.hl);
+        bool b = v & 1;
+        memmap.write(cpu.hl, v >>= 1);
+        cpu.flags = (b ? CARRY_FLAG : 0) | (v ? 0 : ZERO_FLAG);
         return 16;
     }
 
-    case 0x3F: // srl a
-        if (cpu.a & 1) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+    case 0x3F: { // srl a
+        bool b = cpu.a & 1;
         cpu.a >>= 1;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.a ? 0 : ZERO_FLAG);
         return 8;
+    }
 
     case 0x40: // bit 0, b
         cpu.flags = (cpu.b & 0x01 ? 0 : ZERO_FLAG) | HALFCARRY_FLAG | (cpu.flags & CARRY_FLAG);
@@ -1103,10 +1227,5 @@ long Emulator::execute_bits() {
     case 0xFF: // set 7, a
         cpu.a |= 0x80;
         return 8;
-
-    default:
-        std::cerr << "bits unimplemented " << std::hex << (int)op << '\n';
-        { char c; std::cin >> c; }
-        return 4;
     }
 }
