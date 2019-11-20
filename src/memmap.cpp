@@ -26,7 +26,7 @@ byte MemoryMap::read(word address) {
     } else if (address < 0xFEA0) {
         return oam[address - 0xFE00];
     } else if (address < 0xFF00) {
-        throw address;
+        return 0xFF; // invalid address
     } else if (address < 0xFF80) {
         return read_ctrl(address);
     } else if (address < 0xFFFF) {
@@ -54,7 +54,7 @@ void MemoryMap::write(word address, byte value) {
     } else if (address < 0xFEA0) {
         oam[address - 0xFE00] = value;
     } else if (address < 0xFF00) {
-        throw address;
+        // ignored
     } else if (address < 0xFF80) {
         write_ctrl(address, value);
     } else if (address < 0xFFFF) {

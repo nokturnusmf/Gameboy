@@ -25,6 +25,20 @@ public:
     virtual void write(word address, byte value) = 0;
 };
 
+class NoMBC : public MBC {
+public:
+    NoMBC(std::vector<byte>&& data) : data(std::move(data)) {}
+
+    byte read(word address) {
+        return data[address];
+    }
+
+    void write(word, byte) {}
+
+private:
+    std::vector<byte> data;
+};
+
 class MBC3RB : public MBC {
 public:
     MBC3RB(std::vector<byte>&& data, int ram_size)
@@ -57,6 +71,9 @@ private:
 
 static MBC* create_mbc(std::vector<byte>&& data) {
     switch (data[0x147]) {
+    case 0x00:
+        return new NoMBC(std::move(data));
+
     case 0x13:
         return new MBC3RB(std::move(data), data[0x149]);
 
