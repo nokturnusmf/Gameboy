@@ -14,7 +14,8 @@ public:
         Start,
         Select,
         B,
-        A
+        A,
+        None
     };
 
     void press(Button button);

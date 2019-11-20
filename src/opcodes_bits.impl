@@ -346,62 +346,47 @@ long Emulator::execute_bits() {
         return 8;
     }
 
-    case 0x30: { // sll b
-        bool b = cpu.b & 0x80;
-        cpu.b = (cpu.b << 1) + 1;
-        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.b ? 0 : ZERO_FLAG);
+    case 0x30: // swap b
+        cpu.b = (cpu.b << 4) | (cpu.b >> 4);
+        cpu.flags = cpu.b ? 0 : ZERO_FLAG;
         return 8;
-    }
 
-    case 0x31: { // sll c
-        bool b = cpu.c & 0x80;
-        cpu.c = (cpu.c << 1) + 1;
-        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.c ? 0 : ZERO_FLAG);
+    case 0x31: // swap c
+        cpu.c = (cpu.c << 4) | (cpu.c >> 4);
+        cpu.flags = cpu.c ? 0 : ZERO_FLAG;
         return 8;
-    }
 
-    case 0x32: { // sll d
-        bool b = cpu.d & 0x80;
-        cpu.d = (cpu.d << 1) + 1;
-        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.d ? 0 : ZERO_FLAG);
+    case 0x32: // swap d
+        cpu.d = (cpu.d << 4) | (cpu.d >> 4);
+        cpu.flags = cpu.d ? 0 : ZERO_FLAG;
         return 8;
-    }
 
-    case 0x33: { // sll e
-        bool b = cpu.e & 0x80;
-        cpu.e = (cpu.e << 1) + 1;
-        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.e ? 0 : ZERO_FLAG);
+    case 0x33: // swap e
+        cpu.e = (cpu.e << 4) | (cpu.e >> 4);
+        cpu.flags = cpu.e ? 0 : ZERO_FLAG;
         return 8;
-    }
 
-    case 0x34: { // sll h
-        bool b = cpu.h & 0x80;
-        cpu.h = (cpu.h << 1) + 1;
-        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.h ? 0 : ZERO_FLAG);
+    case 0x34: // swap h
+        cpu.h = (cpu.h << 4) | (cpu.h >> 4);
+        cpu.flags = cpu.h ? 0 : ZERO_FLAG;
         return 8;
-    }
 
-    case 0x35: { // sll l
-        bool b = cpu.l & 0x80;
-        cpu.l = (cpu.l << 1) + 1;
-        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.l ? 0 : ZERO_FLAG);
+    case 0x35: // swap l
+        cpu.l = (cpu.l << 4) | (cpu.l >> 4);
+        cpu.flags = cpu.l ? 0 : ZERO_FLAG;
         return 8;
-    }
 
-    case 0x36: { // sll (hl)
-        byte v = memmap.read(cpu.hl);
-        bool b = v & 0x80;
-        memmap.write(cpu.hl, (v <<= 1) += 1);
-        cpu.flags = (b ? CARRY_FLAG : 0) | (v ? 0 : ZERO_FLAG);
+    case 0x36: { // swap (hl)
+        byte b = memmap.read(cpu.hl);
+        memmap.write(cpu.hl, (b << 4) | (b >> 4));
+        cpu.flags = b ? 0 : ZERO_FLAG;
         return 16;
     }
 
-    case 0x37: { // sll a
-        bool b = cpu.a & 0x80;
-        cpu.a = (cpu.a << 1) + 1;
-        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.a ? 0 : ZERO_FLAG);
+    case 0x37: // swap a
+        cpu.a = (cpu.a << 4) | (cpu.a >> 4);
+        cpu.flags = cpu.a ? 0 : ZERO_FLAG;
         return 8;
-    }
 
     case 0x38: { // srl b
         bool b = cpu.b & 1;

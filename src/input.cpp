@@ -1,6 +1,6 @@
 #include "input.h"
 
-void Input::press(Input::Button button) {
+void Input::press(Button button) {
     states[button] = false;
 }
 
