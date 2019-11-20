@@ -13,9 +13,13 @@ void Timer::update(long cycles) {
 
     if (tac & TIMER_ENABLE) {
         int ccc = CYCLES_PER_CLOCK[tac & 0b11];
-        if (tim_counter += cycles >= ccc) {
+        tim_counter += cycles;
+        while (tim_counter >= ccc) {
             tim_counter -= ccc;
-            interrupts.flags |= Interrupts::Timer;
+            if (!++tima) {
+                interrupts.flags |= Interrupts::Timer;
+                tima = tma;
+            }
         }
     }
 }

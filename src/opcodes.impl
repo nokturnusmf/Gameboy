@@ -323,7 +323,7 @@ long Emulator::execute() {
         cpu.hl += cpu.sp;
         cpu.flags = (cpu.hl < cpu.sp ? CARRY_FLAG : 0) | (cpu.flags & ZERO_FLAG);
         ++cpu.pc;
-        return 12;
+        return 8;
 
     case 0x3A: // ldd a, (hl)
         cpu.a = memmap.read(cpu.hl--);
@@ -1353,6 +1353,7 @@ long Emulator::execute() {
     case 0xF1: // pop af
         cpu.af = memmap.read_word(cpu.sp);
         cpu.sp += 2;
+        cpu.flags &= 0xF0;
         ++cpu.pc;
         return 12;
 

@@ -114,6 +114,18 @@ void MemoryMap::write_ctrl(word address, byte value) {
     case 0x00:
         input.write(value);
         break;
+    case 0x04:
+        timer.div = 0;
+        break;
+    case 0x05:
+        timer.tima = value;
+        break;
+    case 0x06:
+        timer.tma = value;
+        break;
+    case 0x07:
+        timer.tac = value;
+        break;
     case 0x0F:
         interrupts.flags = value;
         break;

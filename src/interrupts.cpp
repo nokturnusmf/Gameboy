@@ -9,13 +9,16 @@ static void do_call(CPU& cpu, MemoryMap& memmap, word address) {
 }
 
 void Interrupts::process() {
+    byte b = enabled & flags;
+
     if (!ime) {
+        if (b) {
+            cpu.halt = false;
+        }
         return;
     }
 
-    byte b = enabled & flags;
     b &= -b;
-
     switch (b) {
     case 0:
         return;
