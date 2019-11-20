@@ -146,7 +146,7 @@ void Display::draw_bg_line(int line) {
 
         word data = memmap.read_word(tile_data + tile_index * 16 + (row % 8) * 2);
 
-        draw_pixel_line(data, i, line, false);
+        draw_pixel_line(data, i, line, false, false, false);
     }
 }
 
@@ -166,7 +166,7 @@ void Display::draw_window_line(int line) {
 
         word data = memmap.read_word(tile_data + tile_index * 16 + (row % 8) * 2);
 
-        draw_pixel_line(data, i, line, false);
+        draw_pixel_line(data, i, line, false, false, false);
     }
 }
 
@@ -178,6 +178,13 @@ void Display::draw_sprites() {
     }
 }
 
+inline word flip_pixel_line(word w) {
+    w = (w & 0xF0F0) >> 4 | (w & 0x0F0F) << 4;
+    w = (w & 0xCCCC) >> 2 | (w & 0x3333) << 2;
+    w = (w & 0xAAAA) >> 1 | (w & 0x5555) << 1;
+    return w;
+}
+
 void Display::draw_sprite(int n) {
     byte y = memmap.read(0xFE00 + n * 4);
     byte x = memmap.read(0xFE01 + n * 4);
@@ -187,13 +194,15 @@ void Display::draw_sprite(int n) {
     if (y == 0 || y >= 144 || x == 0 || x > 168) return;
 
     for (int i = 0; i < 8; ++i) {
-        word data = memmap.read_word(0x8000 + tile_index * 16 +  i * 2);
-        // TODO y flip read upside down, x flip swap bits of data
-        draw_pixel_line(data, x - 8, y + i - 16, true, attr & 0x10);
+        word data = memmap.read_word(0x8000 + tile_index * 16 + (attr & 0x40 ? 7 - i : i) * 2);
+        if (attr & 0x20) {
+            data = flip_pixel_line(data);
+        }
+        draw_pixel_line(data, x - 8, y + i - 16, true, attr & 0x10, ~attr & 0x80);
     }
 }
 
-void Display::draw_pixel_line(word pixel, int x, int y, bool is_sprite, bool sprite_palette) {
+void Display::draw_pixel_line(word pixel, int x, int y, bool is_sprite, bool sprite_palette, bool sprite_priority) {
     if (y < 0 || y >= 144) return;
 
     byte upper = pixel >> 8, lower = pixel;
@@ -206,8 +215,10 @@ void Display::draw_pixel_line(word pixel, int x, int y, bool is_sprite, bool spr
 
         if (is_sprite && !color) continue;
 
+        if (is_sprite && !sprite_priority && depth[y * 160 + x + i]) continue;
+
         frame[y * 160 + x + i] = get_pixel(color, is_sprite, sprite_palette);
-        // TODO depth
+        depth[y * 160 + x + i] = is_sprite | color;
     }
 }
 
@@ -232,6 +243,7 @@ Pixel Display::map_pixel(byte index) {
 
 void Display::write_frame()  {
     display_callback(reinterpret_cast<byte*>(frame));
+    for (auto& b : depth) b = 0;
 }
 
 byte Display::read_io(word address) {

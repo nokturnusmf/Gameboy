@@ -61,9 +61,9 @@ private:
     void draw_sprites();
     void draw_sprite(int n);
 
-    void draw_pixel_line(word pixel, int x, int y, bool is_sprite, bool sprite_palette = false);
+    void draw_pixel_line(word pixel, int x, int y, bool is_sprite, bool sprite_palette, bool sprite_priority);
 
-    Pixel get_pixel(byte index, bool is_sprite, bool sprite_palette = false);
+    Pixel get_pixel(byte index, bool is_sprite, bool sprite_palette);
     Pixel map_pixel(byte index);
 
     void write_frame() ;
@@ -77,7 +77,7 @@ private:
     LCDRegisters regs;
 
     Pixel frame[160 * 144];
-    byte depth[160 * 144];
+    bool depth[160 * 144];
 
     long cycle_count = 0;
 };
