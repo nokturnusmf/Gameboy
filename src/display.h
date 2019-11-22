@@ -53,10 +53,11 @@ private:
     bool window_enabled() const;
     bool sprites_enabled() const;
 
-    void draw_line(int line);
+    void draw_scanline(int line);
 
     void draw_bg_line(int line);
     void draw_window_line(int line);
+    void draw_line(int x, int y, byte row, byte column, word tile_map, word tile_data);
 
     void draw_sprites();
     void draw_sprite(int n);

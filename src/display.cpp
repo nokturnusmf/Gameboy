@@ -55,7 +55,7 @@ void Display::advance(long cycles) {
         if (cycle_count >= ModeCycles[mode]) {
             cycle_count %= ModeCycles[mode];
 
-            draw_line(regs.ly);
+            draw_scanline(regs.ly);
 
             if (++regs.ly < 144) {
                 set_mode(VideoMode::Oam);
@@ -93,7 +93,7 @@ inline bool Display::bg_enabled() const {
 }
 
 inline bool Display::window_enabled() const {
-    return regs.lcdc & WINDOW_ENABLE;
+    return regs.lcdc & WINDOW_ENABLE && regs.wx < 167 && regs.wy < 144;
 }
 
 inline bool Display::sprites_enabled() const {
@@ -120,7 +120,7 @@ void Display::set_mode(VideoMode new_mode) {
     mode = new_mode;
 }
 
-void Display::draw_line(int line) {
+void Display::draw_scanline(int line) {
     if (bg_enabled()) {
         draw_bg_line(line);
     }
@@ -135,18 +135,8 @@ void Display::draw_bg_line(int line) {
     word tile_data = regs.lcdc & TILE_DATA_SELECT ? 0x8000 : 0x9000;
 
     byte row = line + regs.scy;
-
-    for (int i = 0; i < 160 + 8; i += 8) {
-        byte column = i + regs.scx;
-
-        int tile_index = memmap.read(tile_map + (row & ~7u) * 4 + column / 8);
-        if (tile_data == 0x9000 && tile_index >= 128) {
-            tile_index -= 256;
-        }
-
-        word data = memmap.read_word(tile_data + tile_index * 16 + (row % 8) * 2);
-
-        draw_pixel_line(data, i, line, false, false, false);
+    for (int i = 0; i < 160; i += 8) {
+        draw_line(i, line, row, i + regs.scx, tile_map, tile_data);
     }
 }
 
@@ -155,19 +145,20 @@ void Display::draw_window_line(int line) {
     word tile_data = regs.lcdc & TILE_DATA_SELECT ? 0x8000 : 0x9000;
 
     byte row = line + regs.wy;
-
-    for (int i = 0; i < 160 + 8; i += 8) {
-        byte column = i + regs.wx - 7;
-
-        int tile_index = memmap.read(tile_map + (row & ~7u) * 4 + column / 8);
-        if (tile_data == 0x9000 && tile_index >= 128) {
-            tile_index -= 256;
-        }
-
-        word data = memmap.read_word(tile_data + tile_index * 16 + (row % 8) * 2);
-
-        draw_pixel_line(data, i, line, false, false, false);
+    for (int i = 0; i < 160; i += 8) {
+        draw_line(i, line, row, i + regs.wx - 7, tile_map, tile_data);
     }
+}
+
+void Display::draw_line(int x, int y, byte row, byte column, word tile_map, word tile_data) {
+    int tile_index = memmap.read(tile_map + (row & ~7u) * 4 + column / 8);
+    if (tile_data == 0x9000 && tile_index >= 128) {
+        tile_index -= 256;
+    }
+
+    word data = memmap.read_word(tile_data + tile_index * 16 + (row % 8) * 2);
+
+    draw_pixel_line(data, x, y, false, false, false);
 }
 
 void Display::draw_sprites() {
@@ -191,7 +182,7 @@ void Display::draw_sprite(int n) {
     byte tile_index = memmap.read(0xFE02 + n * 4);
     byte attr = memmap.read(0xFE03 + n * 4);
 
-    if (y == 0 || y >= 144 || x == 0 || x > 168) return;
+    if (y == 0 || y >= 160 || x == 0 || x >= 168) return;
 
     for (int i = 0; i < 8; ++i) {
         word data = memmap.read_word(0x8000 + tile_index * 16 + (attr & 0x40 ? 7 - i : i) * 2);
@@ -213,9 +204,7 @@ void Display::draw_pixel_line(word pixel, int x, int y, bool is_sprite, bool spr
         if (x + i < 0) continue;
         if (x + i >= 160) break;
 
-        if (is_sprite && !color) continue;
-
-        if (is_sprite && !sprite_priority && depth[y * 160 + x + i]) continue;
+        if (is_sprite && (!color || (!sprite_priority && depth[y * 160 + x + i]))) continue;
 
         frame[y * 160 + x + i] = get_pixel(color, is_sprite, sprite_palette);
         depth[y * 160 + x + i] = is_sprite | color;
@@ -279,8 +268,7 @@ byte Display::read_io(word address) {
     case 0x6B:
         return regs.obpd;
     default:
-        // std::cerr << "lcd invalid read " << address << '\n';
-        return 0;
+        return 0xFF;
     }
 }
 
@@ -331,8 +319,5 @@ void Display::write_io(word address, byte value) {
     case 0x6B:
         regs.obpd = value;
         break;
-    default:
-        // std::cerr << "lcd invalid write " << address << ' ' << (int)value << '\n';
-        ;
     }
 }
