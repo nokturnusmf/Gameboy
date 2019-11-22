@@ -42,9 +42,8 @@ long Emulator::execute() {
 
     case 0x07: { // rlca
         bool b = cpu.a & 0x80;
-        cpu.a = cpu.a << 1 | b;
-        if (b) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+        cpu.a = (cpu.a << 1) | b;
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.a ? 0 : ZERO_FLAG);
         ++cpu.pc;
         return 4;
     }
@@ -85,10 +84,9 @@ long Emulator::execute() {
         return 8;
 
     case 0x0F: { // rrca
-        byte b = cpu.a << 7;
-        cpu.a = cpu.a >> 1 | b;
-        if (b) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+        bool b = cpu.a & 1;
+        cpu.a = (cpu.a >> 1) | (b ? 0x80 : 0);
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.a ? 0 : ZERO_FLAG);
         ++cpu.pc;
         return 4;
     }
@@ -129,9 +127,8 @@ long Emulator::execute() {
 
     case 0x17: { // rla
         bool b = cpu.a & 0x80;
-        cpu.a = cpu.a << 1 | (bool)(cpu.flags & CARRY_FLAG);
-        if (b) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+        cpu.a = (cpu.a << 1) | (bool)(cpu.flags & CARRY_FLAG);
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.a ? 0 : ZERO_FLAG);
         ++cpu.pc;
         return 4;
     }
@@ -172,9 +169,8 @@ long Emulator::execute() {
 
     case 0x1F: { // rra
         bool b = cpu.a & 1;
-        cpu.a = cpu.a >> 1 | (cpu.flags & CARRY_FLAG ? 0x80 : 0);
-        if (b) cpu.flags |= CARRY_FLAG;
-        else cpu.flags &= ~CARRY_FLAG;
+        cpu.a = (cpu.a >> 1) | (cpu.flags & CARRY_FLAG ? 0x80 : 0);
+        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.a ? 0 : ZERO_FLAG);
         ++cpu.pc;
         return 4;
     }
@@ -258,6 +254,7 @@ long Emulator::execute() {
 
     case 0x2F: // cpl
         cpu.a = ~cpu.a;
+        cpu.flags |= ADDSUB_FLAG | HALFCARRY_FLAG;
         ++cpu.pc;
         return 4;
 
@@ -306,7 +303,7 @@ long Emulator::execute() {
         return 12;
 
     case 0x37: // scf
-        cpu.flags |= CARRY_FLAG;
+        cpu.flags = CARRY_FLAG | (cpu.flags & ZERO_FLAG);
         ++cpu.pc;
         return 4;
 
@@ -353,6 +350,7 @@ long Emulator::execute() {
 
     case 0x3F: // ccf
         cpu.flags ^= CARRY_FLAG;
+        cpu.flags &= ~(ADDSUB_FLAG | HALFCARRY_FLAG);
         ++cpu.pc;
         return 4;
 
@@ -885,7 +883,7 @@ long Emulator::execute() {
         return 4;
 
     case 0xA2: // and d
-        cpu.a |= cpu.d;
+        cpu.a &= cpu.d;
         cpu.flags = HALFCARRY_FLAG | (cpu.a ? 0 : ZERO_FLAG);
         ++cpu.pc;
         return 4;
@@ -1376,8 +1374,9 @@ long Emulator::execute() {
         ++cpu.pc;
         return 16;
 
-    case 0xF6: // or a, imm
+    case 0xF6: // or imm
         cpu.a |= memmap.read((++cpu.pc)++);
+        cpu.flags = cpu.a ? 0 : ZERO_FLAG;
         return 8;
 
     case 0xF7: // rst 0x30
