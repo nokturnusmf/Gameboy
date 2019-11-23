@@ -135,8 +135,8 @@ void Display::draw_bg_line(int line) {
     word tile_data = regs.lcdc & TILE_DATA_SELECT ? 0x8000 : 0x9000;
 
     byte row = line + regs.scy;
-    for (int i = 0; i < 160; i += 8) {
-        draw_line(i, line, row, i + regs.scx, tile_map, tile_data);
+    for (int i = 0; i < 168; i += 8) {
+        draw_line(i - regs.scx % 8, line, row, i + regs.scx, tile_map, tile_data);
     }
 }
 
@@ -145,8 +145,8 @@ void Display::draw_window_line(int line) {
     word tile_data = regs.lcdc & TILE_DATA_SELECT ? 0x8000 : 0x9000;
 
     byte row = line + regs.wy;
-    for (int i = 0; i < 160; i += 8) {
-        draw_line(i, line, row, i + regs.wx - 7, tile_map, tile_data);
+    for (int i = 0; i < 168; i += 8) {
+        draw_line(i - (regs.wx - 7) % 8, line, row, i + regs.wx - 7, tile_map, tile_data);
     }
 }
 
