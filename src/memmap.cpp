@@ -69,11 +69,7 @@ void MemoryMap::write_word(word address, word value) {
     write(address + 1, value >> 8);
 }
 
-#include <iostream>
-#include <iomanip>
-
 byte MemoryMap::read_ctrl(word address) {
-    // std::cout << "read ctrl " << std::hex << address << '\n';
     switch (address & 0xFF) {
     case 0x00:
         return input.read();
@@ -109,7 +105,6 @@ byte MemoryMap::read_ctrl(word address) {
 }
 
 void MemoryMap::write_ctrl(word address, byte value) {
-    // std::cout << "write ctrl " << std::hex << address << ' ' << (int)value << '\n';
     switch (address & 0xFF) {
     case 0x00:
         input.write(value);

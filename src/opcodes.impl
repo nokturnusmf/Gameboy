@@ -1,5 +1,7 @@
 #pragma once
 
+extern void error(const char* msg, int v = -1);
+
 long Emulator::execute() {
     if (cpu.halt) {
         return 4;
@@ -92,7 +94,6 @@ long Emulator::execute() {
     }
 
     case 0x10: // stop
-        std::cout << "stop\n";
         ++cpu.pc;
         return 0;
 
@@ -1187,8 +1188,8 @@ long Emulator::execute() {
         return 12;
 
     case 0xD3: // -
-        std::cerr << "undefined opcode D3\n";
-        while (1) { char c; std::cin >> c; }
+        error("undefined opcode D3");
+        return 0;
 
     case 0xD4: // call nc imm
         if (cpu.flags & CARRY_FLAG) {
@@ -1242,8 +1243,8 @@ long Emulator::execute() {
         return 12;
 
     case 0xDB: // -
-        std::cerr << "undefined opcode DB\n";
-        while (1) { char c; std::cin >> c; }
+        error("undefined opcode DB");
+        return 0;
 
     case 0xDC: // call c imm
         if (cpu.flags & CARRY_FLAG) {
@@ -1256,8 +1257,8 @@ long Emulator::execute() {
         }
 
     case 0xDD: // -
-        std::cerr << "undefined opcode DD\n";
-        while (1) { char c; std::cin >> c; }
+        error("undefined opcode DD");
+        return 0;
 
     case 0xDE: { // sbc a, imm
         byte b = memmap.read((++cpu.pc)++);
@@ -1287,12 +1288,12 @@ long Emulator::execute() {
         return 8;
 
     case 0xE3: // -
-        std::cerr << "undefined opcode E3\n";
-        while (1) { char c; std::cin >> c; }
+        error("undefined opcode E3");
+        return 0;
 
     case 0xE4: // -
-        std::cerr << "undefined opcode E4\n";
-        while (1) { char c; std::cin >> c; }
+        error("undefined opcode E4");
+        return 0;
 
     case 0xE5: // push hl
         memmap.write_word(cpu.sp -= 2, cpu.hl);
@@ -1323,16 +1324,16 @@ long Emulator::execute() {
         return 16;
 
     case 0xEB: // -
-        std::cerr << "undefined opcode EB\n";
-        while (1) { char c; std::cin >> c; }
+        error("undefined opcode EB");
+        return 0;
 
     case 0xEC: // -
-        std::cerr << "undefined opcode EC\n";
-        while (1) { char c; std::cin >> c; }
+        error("undefined opcode EC");
+        return 0;
 
     case 0xED: // -
-        std::cerr << "undefined opcode ED\n";
-        while (1) { char c; std::cin >> c; }
+        error("undefined opcode ED");
+        return 0;
 
     case 0xEE: // xor imm
         cpu.a ^= memmap.read((++cpu.pc)++);
@@ -1366,8 +1367,8 @@ long Emulator::execute() {
         return 4;
 
     case 0xF4: // -
-        std::cerr << "undefined opcode F4\n";
-        while (1) { char c; std::cin >> c; }
+        error("undefined opcode F4");
+        return 0;
 
     case 0xF5: // push af
         memmap.write_word(cpu.sp -= 2, cpu.af);
@@ -1404,12 +1405,12 @@ long Emulator::execute() {
         return 4;
 
     case 0xFC: // -
-        std::cerr << "undefined opcode FC\n";
-        while (1) { char c; std::cin >> c; }
+        error("undefined opcode FC");
+        return 0;
 
     case 0xFD: // -
-        std::cerr << "undefined opcode FD\n";
-        while (1) { char c; std::cin >> c; }
+        error("undefined opcode FD");
+        return 0;
 
     case 0xFE: { // cp imm
         byte b = memmap.read((++cpu.pc)++);
@@ -1423,9 +1424,7 @@ long Emulator::execute() {
         return 16;
 
     default:
-        std::cerr << "unimplemented " << std::hex << (int)op << '\n';
-        { char c; std::cin >> c; }
-        ++cpu.pc;
-        return 4;
+        error("unimplemented", op);
+        return 0;
     }
 }

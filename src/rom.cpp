@@ -1,8 +1,8 @@
 #include "rom.h"
 
-#include <iostream>
-#include <iomanip>
 #include <fstream>
+
+extern void error(const char* msg, int v);
 
 static std::vector<byte> load_file(const std::string& file_path) {
     std::ifstream file(file_path);
@@ -69,7 +69,7 @@ private:
     BankedMemory<0xA000, 0x2000, 0x0000> ram;
 };
 
-static MBC* create_mbc(std::vector<byte>&& data) {
+MBC* create_mbc(std::vector<byte>&& data) {
     switch (data[0x147]) {
     case 0x00:
         return new NoMBC(std::move(data));
@@ -78,8 +78,8 @@ static MBC* create_mbc(std::vector<byte>&& data) {
         return new MBC3RB(std::move(data), data[0x149]);
 
     default:
-        std::cerr << "unimplemented mbc type " << (int)data[0x147] << '\n';
-        throw data[0x147];
+        error("unimplemented mbc type", data[0x147]);
+        return 0;
     }
 }
 

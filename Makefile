@@ -1,5 +1,5 @@
 CXX			:= g++
-CXX_FLAGS	:= -Wall -Wextra
+CXX_FLAGS	:= -std=c++17 -Wall -Wextra
 REL_FLAGS	:= -O3 -flto -march=native
 DBG_FLAGS	:= -g
 

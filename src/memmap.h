@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 
-#include "gb.h"
+#include "types.h"
 #include "bank.h"
 #include "rom.h"
 #include "timer.h"

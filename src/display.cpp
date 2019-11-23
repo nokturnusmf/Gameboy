@@ -19,7 +19,7 @@ static const byte SPRITE_SIZE = 0x04;
 static const byte SPRITE_ENABLE = 0x02;
 static const byte BG_ENABLE = 0x01;
 
-Display::Display(MemoryMap& memmap, Interrupts& interrupts, void(*display_callback)(byte*))
+Display::Display(MemoryMap& memmap, Interrupts& interrupts, bool(*display_callback)(byte*))
     : memmap(memmap), interrupts(interrupts), display_callback(display_callback), regs{} {
 }
 
@@ -231,7 +231,7 @@ Pixel Display::map_pixel(byte index) {
 }
 
 void Display::write_frame()  {
-    display_callback(reinterpret_cast<byte*>(frame));
+    open = display_callback(reinterpret_cast<byte*>(frame));
     for (auto& b : depth) b = 0;
 }
 

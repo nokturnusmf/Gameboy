@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "gb.h"
+#include "types.h"
 
 template<unsigned Address, unsigned Block, unsigned Offset>
 class BankedMemory {

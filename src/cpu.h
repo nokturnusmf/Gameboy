@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gb.h"
+#include "types.h"
 
 struct CPU {
     union {

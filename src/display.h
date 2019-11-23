@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gb.h"
+#include "types.h"
 
 class MemoryMap;
 class Interrupts;
@@ -38,12 +38,14 @@ struct LCDRegisters {
 
 class Display {
 public:
-    Display(MemoryMap& memmap, Interrupts& interrupts, void(*display_callback)(byte*));
+    Display(MemoryMap& memmap, Interrupts& interrupts, bool(*display_callback)(byte*));
 
     void advance(long cycles);
 
     byte read_io(word address);
     void write_io(word address, byte value);
+
+    bool close_requested() const { return !open; }
 
 private:
     void set_mode(VideoMode mode);
@@ -67,12 +69,13 @@ private:
     Pixel get_pixel(byte index, bool is_sprite, bool sprite_palette);
     Pixel map_pixel(byte index);
 
-    void write_frame() ;
+    void write_frame();
 
     MemoryMap& memmap;
     Interrupts& interrupts;
 
-    void(*display_callback)(byte*);
+    bool(*display_callback)(byte*);
+    bool open = true;
 
     VideoMode mode;
     LCDRegisters regs;

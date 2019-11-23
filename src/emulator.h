@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 
-#include "gb.h"
+#include "types.h"
 #include "cpu.h"
 #include "memmap.h"
 #include "interrupts.h"
@@ -13,14 +13,16 @@
 
 class Emulator {
 public:
-    Emulator(const std::string& file_path);
+    Emulator(const std::string& file_path, bool(*display_callback)(byte*));
+
+    Input& get_input() { return input; }
 
     void run();
 
+private:
     long execute();
     long execute_bits();
 
-private:
     CPU cpu;
     MemoryMap memmap;
     Interrupts interrupts;
