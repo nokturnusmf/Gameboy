@@ -16,7 +16,7 @@ struct Interrupts {
         Joypad = 0x10
     };
 
-    void process();
+    long process();
 
     bool ime = 0;
     byte enabled = 0;

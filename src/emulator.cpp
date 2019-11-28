@@ -6,12 +6,11 @@ Emulator::Emulator(const std::string& file_path, bool(*display_callback)(byte*))
 }
 
 void Emulator::run() {
-    long cycles, total_cycles = 0;
     while (!display.close_requested()) {
-        total_cycles += cycles = execute();
+        long cycles = interrupts.process();
+        cycles += execute();
         display.advance(cycles);
         timer.update(cycles);
-        interrupts.process();
     }
 }
 

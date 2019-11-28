@@ -8,20 +8,22 @@ static void do_call(CPU& cpu, MemoryMap& memmap, word address) {
     cpu.pc = address;
 }
 
-void Interrupts::process() {
+long Interrupts::process() {
     byte b = enabled & flags;
 
     if (!ime) {
         if (b) {
             cpu.halt = false;
+            return 4;
+        } else {
+            return 0;
         }
-        return;
     }
 
     b &= -b;
     switch (b) {
     case 0:
-        return;
+        return 0;
 
     case Interrupts::VBlank:
         do_call(cpu, memmap, 0x40);
@@ -46,5 +48,7 @@ void Interrupts::process() {
 
     ime = false;
     flags &= ~b;
+    long cycles = cpu.halt ? 24 : 20;
     cpu.halt = false;
+    return cycles;
 }

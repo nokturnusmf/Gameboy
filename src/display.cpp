@@ -61,7 +61,9 @@ void Display::advance(long cycles) {
                 set_mode(VideoMode::Oam);
             } else {
                 set_mode(VideoMode::VBlank);
-                interrupts.flags |= Interrupts::VBlank;
+                if (display_enabled()) {
+                    interrupts.flags |= Interrupts::VBlank;
+                }
             }
         }
         break;

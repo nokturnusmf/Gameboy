@@ -6,7 +6,7 @@ static const int TIMER_ENABLE = 0x04;
 static const int CYCLES_PER_CLOCK[] = { 1024, 16, 64, 256 };
 
 void Timer::update(long cycles) {
-    if (div_counter += cycles > CYCLES_PER_DIV) {
+    if ((div_counter += cycles) > CYCLES_PER_DIV) {
         div_counter -= CYCLES_PER_DIV;
         ++div;
     }

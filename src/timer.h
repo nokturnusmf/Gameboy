@@ -9,7 +9,7 @@ public:
 
     void update(long cycles);
 
-    byte div;
+    byte div = 0;
 
     byte tima = 0;
     byte tma = 0;
