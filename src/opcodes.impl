@@ -9,6 +9,10 @@ long Emulator::execute() {
 
     byte op = memmap.read(cpu.pc);
     switch (op) {
+    case 0x27: // daa TEMP
+        ++cpu.pc;
+        return 4;
+
     case 0: // nop
         ++cpu.pc;
         return 4;
@@ -45,7 +49,7 @@ long Emulator::execute() {
     case 0x07: { // rlca
         bool b = cpu.a & 0x80;
         cpu.a = (cpu.a << 1) | b;
-        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.a ? 0 : ZERO_FLAG);
+        cpu.flags = b ? CARRY_FLAG : 0;
         ++cpu.pc;
         return 4;
     }
@@ -59,7 +63,7 @@ long Emulator::execute() {
         cpu.hl += cpu.bc;
         cpu.flags = (cpu.hl < cpu.bc ? CARRY_FLAG : 0) | (cpu.flags & ZERO_FLAG);
         ++cpu.pc;
-        return 12;
+        return 8;
 
     case 0x0A: // ld a, (bc)
         cpu.a = memmap.read(cpu.bc);
@@ -88,7 +92,7 @@ long Emulator::execute() {
     case 0x0F: { // rrca
         bool b = cpu.a & 1;
         cpu.a = (cpu.a >> 1) | (b ? 0x80 : 0);
-        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.a ? 0 : ZERO_FLAG);
+        cpu.flags = b ? CARRY_FLAG : 0;
         ++cpu.pc;
         return 4;
     }
@@ -129,7 +133,7 @@ long Emulator::execute() {
     case 0x17: { // rla
         bool b = cpu.a & 0x80;
         cpu.a = (cpu.a << 1) | (bool)(cpu.flags & CARRY_FLAG);
-        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.a ? 0 : ZERO_FLAG);
+        cpu.flags = b ? CARRY_FLAG : 0;
         ++cpu.pc;
         return 4;
     }
@@ -142,7 +146,7 @@ long Emulator::execute() {
         cpu.hl += cpu.de;
         cpu.flags = (cpu.hl < cpu.de ? CARRY_FLAG : 0) | (cpu.flags & ZERO_FLAG);
         ++cpu.pc;
-        return 12;
+        return 8;
 
     case 0x1A: // ld a, (de)
         cpu.a = memmap.read(cpu.de);
@@ -171,7 +175,7 @@ long Emulator::execute() {
     case 0x1F: { // rra
         bool b = cpu.a & 1;
         cpu.a = (cpu.a >> 1) | (cpu.flags & CARRY_FLAG ? 0x80 : 0);
-        cpu.flags = (b ? CARRY_FLAG : 0) | (cpu.a ? 0 : ZERO_FLAG);
+        cpu.flags = b ? CARRY_FLAG : 0;
         ++cpu.pc;
         return 4;
     }
@@ -227,7 +231,7 @@ long Emulator::execute() {
         cpu.flags = (cpu.hl & 0x8000 ? CARRY_FLAG : 0) | (cpu.flags & ZERO_FLAG);
         cpu.hl <<= 1;
         ++cpu.pc;
-        return 12;
+        return 8;
 
     case 0x2A: // ldi a, (hl)
         cpu.a = memmap.read(cpu.hl++);
@@ -755,8 +759,8 @@ long Emulator::execute() {
         return 4;
 
     case 0x8E: { // adc a, (hl)
-        byte b = memmap.read(cpu.hl);
-        cpu.a += b + (bool)(cpu.flags & CARRY_FLAG);
+        byte b = memmap.read(cpu.hl) + (bool)(cpu.flags & CARRY_FLAG);
+        cpu.a += b;
         cpu.flags = (cpu.a < b ? CARRY_FLAG : 0) | (cpu.a ? 0 : ZERO_FLAG);
         ++cpu.pc;
         return 8;
@@ -858,8 +862,8 @@ long Emulator::execute() {
         return 4;
 
     case 0x9E: { // sbc a, (hl)
-        byte b = memmap.read(cpu.hl);
-        cpu.a -= b + (bool)(cpu.flags & CARRY_FLAG);
+        byte b = memmap.read(cpu.hl) + (bool)(cpu.flags & CARRY_FLAG);
+        cpu.a -= b;
         cpu.flags = (cpu.a < b ? 0 : CARRY_FLAG) | (cpu.a ? 0 : ZERO_FLAG) | ADDSUB_FLAG;
         ++cpu.pc;
         return 8;
@@ -867,7 +871,7 @@ long Emulator::execute() {
 
     case 0x9F: // sbc a, a
         cpu.a = cpu.flags & CARRY_FLAG ? -1 : 0;
-        cpu.flags = ADDSUB_FLAG | cpu.a ? 0 : ZERO_FLAG | CARRY_FLAG | ADDSUB_FLAG;
+        cpu.flags = (cpu.a ? CARRY_FLAG : ZERO_FLAG) | ADDSUB_FLAG;
         ++cpu.pc;
         return 4;
 
@@ -1062,7 +1066,7 @@ long Emulator::execute() {
         } else {
             cpu.pc = memmap.read_word(cpu.sp);
             cpu.sp += 2;
-            return 12;
+            return 20;
         }
 
     case 0xC1: // pop bc
@@ -1074,10 +1078,11 @@ long Emulator::execute() {
     case 0xC2: // jp nz imm
         if (cpu.flags & ZERO_FLAG) {
             cpu.pc += 3;
+            return 12;
         } else {
             cpu.pc = memmap.read_word(cpu.pc + 1);
+            return 16;
         }
-        return 12;
 
     case 0xC3: // jmp imm
         cpu.pc = memmap.read_word(cpu.pc + 1);
@@ -1090,7 +1095,7 @@ long Emulator::execute() {
         } else {
             memmap.write_word(cpu.sp -= 2, cpu.pc + 3);
             cpu.pc = memmap.read_word(cpu.pc + 1);
-            return 20;
+            return 24;
         }
 
     case 0xC5: // push bc
@@ -1114,7 +1119,7 @@ long Emulator::execute() {
         if (cpu.flags & ZERO_FLAG) {
             cpu.pc = memmap.read_word(cpu.sp);
             cpu.sp += 2;
-            return 12;
+            return 20;
         } else {
             ++cpu.pc;
             return 8;
@@ -1128,10 +1133,11 @@ long Emulator::execute() {
     case 0xCA: // jp z imm
         if (cpu.flags & ZERO_FLAG) {
             cpu.pc = memmap.read_word(cpu.pc + 1);
+            return 16;
         } else {
             cpu.pc += 3;
+            return 12;
         }
-        return 12;
 
     case 0xCB: // bits
         return execute_bits();
@@ -1140,7 +1146,7 @@ long Emulator::execute() {
         if (cpu.flags & ZERO_FLAG) {
             memmap.write_word(cpu.sp -= 2, cpu.pc + 3);
             cpu.pc = memmap.read_word(cpu.pc + 1);
-            return 20;
+            return 24;
         } else {
             cpu.pc += 3;
             return 12;
@@ -1170,7 +1176,7 @@ long Emulator::execute() {
         } else {
             cpu.pc = memmap.read_word(cpu.sp);
             cpu.sp += 2;
-            return 12;
+            return 20;
         }
 
     case 0xD1: // pop de
@@ -1182,10 +1188,11 @@ long Emulator::execute() {
     case 0xD2: // jp nc imm
         if (cpu.flags & CARRY_FLAG) {
             cpu.pc += 3;
+            return 12;
         } else {
             cpu.pc = memmap.read_word(cpu.pc + 1);
+            return 16;
         }
-        return 12;
 
     case 0xD3: // -
         error("undefined opcode D3");
@@ -1198,7 +1205,7 @@ long Emulator::execute() {
         } else {
             memmap.write_word(cpu.sp -= 2, cpu.pc + 3);
             cpu.pc = memmap.read_word(cpu.pc + 1);
-            return 20;
+            return 24;
         }
 
     case 0xD5: // push de
@@ -1222,7 +1229,7 @@ long Emulator::execute() {
         if (cpu.flags & CARRY_FLAG) {
             cpu.pc = memmap.read_word(cpu.sp);
             cpu.sp += 2;
-            return 12;
+            return 20;
         } else {
             ++cpu.pc;
             return 8;
@@ -1237,10 +1244,11 @@ long Emulator::execute() {
     case 0xDA: // jp c imm
         if (cpu.flags & CARRY_FLAG) {
             cpu.pc = memmap.read_word(cpu.pc + 1);
+            return 16;
         } else {
             cpu.pc += 3;
+            return 12;
         }
-        return 12;
 
     case 0xDB: // -
         error("undefined opcode DB");
@@ -1250,7 +1258,7 @@ long Emulator::execute() {
         if (cpu.flags & CARRY_FLAG) {
             memmap.write_word(cpu.sp -= 2, cpu.pc + 3);
             cpu.pc = memmap.read_word(cpu.pc + 1);
-            return 20;
+            return 24;
         } else {
             cpu.pc += 3;
             return 12;
@@ -1310,9 +1318,13 @@ long Emulator::execute() {
         cpu.pc = 0x20;
         return 16;
 
-    case 0xE8: // add sp, imm
-        cpu.sp += (sbyte)memmap.read((++cpu.pc)++);
+    case 0xE8: { // add sp, imm
+        sbyte s = memmap.read((++cpu.pc)++);
+        word w = cpu.sp ^ s;
+        cpu.sp += s;
+        cpu.flags = (w ^ cpu.sp) == 0x100 ? CARRY_FLAG : 0;
         return 16;
+    }
 
     case 0xE9: // jp hl
         cpu.pc = cpu.hl;
@@ -1385,9 +1397,12 @@ long Emulator::execute() {
         cpu.pc = 0x30;
         return 16;
 
-    case 0xF8: // ld hl, sp + imm
-        cpu.hl = cpu.sp + (sbyte)memmap.read((++cpu.pc)++);
+    case 0xF8: { // ld hl, sp + imm
+        sbyte s = memmap.read((++cpu.pc)++);
+        cpu.hl = cpu.sp + s;
+        cpu.flags = (cpu.sp ^ s ^ cpu.hl) == 0x100 ? CARRY_FLAG : 0;
         return 12;
+    }
 
     case 0xF9: // ld sp, hl
         cpu.sp = cpu.hl;

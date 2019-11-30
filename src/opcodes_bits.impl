@@ -163,9 +163,9 @@ long Emulator::execute_bits() {
     case 0x16: { // rl (hl)
         byte v = memmap.read(cpu.hl);
         bool b = v & 0x80;
-        memmap.write(cpu.hl, (v <<= 1) | (bool)(cpu.flags & CARRY_FLAG));
+        memmap.write(cpu.hl, (v <<= 1) |= (bool)(cpu.flags & CARRY_FLAG));
         cpu.flags = (b ? CARRY_FLAG : 0) | (v ? 0 : ZERO_FLAG);
-        return 8;
+        return 16;
     }
 
     case 0x17: { // rl a
@@ -220,7 +220,7 @@ long Emulator::execute_bits() {
     case 0x1E: { // rr (hl)
         byte v = memmap.read(cpu.hl);
         bool b = v & 1;
-        memmap.write(cpu.hl, (v >>= 1) | (cpu.flags & CARRY_FLAG ? 0x80 : 0));
+        memmap.write(cpu.hl, (v >>= 1) |= (cpu.flags & CARRY_FLAG ? 0x80 : 0));
         cpu.flags = (b ? CARRY_FLAG : 0) | (v ? 0 : ZERO_FLAG);
         return 16;
     }
