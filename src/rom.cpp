@@ -42,14 +42,23 @@ private:
 class MBC3RB : public MBC {
 public:
     MBC3RB(std::vector<byte>&& data, int ram_size)
-        : data(std::move(data)), ram(ram_size == 3 ? 0x8000 : 0x800 * ram_size * ram_size) {
-
+        : rom(std::move(data)), ram(ram_size == 3 ? 0x8000 : 0x800 * ram_size * ram_size) {
+        std::ifstream file(reinterpret_cast<const char*>(&rom[0x134]));
+        if (file) {
+            file.read(reinterpret_cast<char*>(&ram[0xA000]), ram.size());
+        }
     }
 
-    ~MBC3RB() {}
+    ~MBC3RB() {
+        std::ofstream file(reinterpret_cast<const char*>(&rom[0x134]));
+        if (file) {
+            ram.set_bank(0);
+            file.write(reinterpret_cast<const char*>(&ram[0xA000]), ram.size());
+        }
+    }
 
     byte read(word address) {
-        return address < 0x8000 ? data[address] : ram[address];
+        return address < 0x8000 ? rom[address] : ram[address];
     }
 
     void write(word address, byte value) {
@@ -58,14 +67,14 @@ public:
         } else if (address < 0x2000) {
             // enable/disable ram
         } else if (address < 0x4000) {
-            data.set_bank(value ? value : 1);
+            rom.set_bank(value ? value : 1);
         } else if (address < 0x6000) {
             ram.set_bank(value);
         }
     }
 
 private:
-    BankedMemory<0x0000, 0x4000, 0x4000> data;
+    BankedMemory<0x0000, 0x4000, 0x4000> rom;
     BankedMemory<0xA000, 0x2000, 0x0000> ram;
 };
 
@@ -78,7 +87,7 @@ MBC* create_mbc(std::vector<byte>&& data) {
         return new MBC3RB(std::move(data), data[0x149]);
 
     default:
-        error("unimplemented mbc type", data[0x147]);
+        error("unimplemented mbc type ", data[0x147]);
         return 0;
     }
 }

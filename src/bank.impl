@@ -13,3 +13,8 @@ template<unsigned Address, unsigned Block, unsigned Offset>
 void BankedMemory<Address, Block, Offset>::set_bank(int bank) {
     this->bank = bank * Block - Offset;
 }
+
+template<unsigned Address, unsigned Block, unsigned Offset>
+int BankedMemory<Address, Block, Offset>::get_bank() const {
+    return (bank + Offset) / Block;
+}

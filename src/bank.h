@@ -13,6 +13,8 @@ public:
     byte& operator[](word address);
 
     void set_bank(int bank);
+    int get_bank() const;
+    int size() const { return data.size(); }
 
 private:
     std::vector<byte> data;
