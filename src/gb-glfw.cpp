@@ -104,7 +104,6 @@ private:
 
     bool frame_limit = true;
     std::chrono::time_point<std::chrono::steady_clock> prev_frame = std::chrono::steady_clock::now();
-    long interval = 0;
 
     Input* input;
 };

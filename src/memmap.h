@@ -8,8 +8,8 @@
 #include "rom.h"
 #include "timer.h"
 
+struct Interrupts;
 class Display;
-class Interrupts;
 class Input;
 
 class MemoryMap {

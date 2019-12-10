@@ -20,8 +20,8 @@ public:
     void run();
 
 private:
-    long execute();
-    long execute_bits();
+    int execute();
+    int execute_bits();
 
     CPU cpu;
     MemoryMap memmap;

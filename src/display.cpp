@@ -23,7 +23,7 @@ Display::Display(MemoryMap& memmap, Interrupts& interrupts, bool(*display_callba
     : memmap(memmap), interrupts(interrupts), display_callback(display_callback), regs{} {
 }
 
-void Display::advance(long cycles) {
+void Display::advance(int cycles) {
     cycle_count += cycles;
     switch (mode) {
     case VideoMode::Oam:

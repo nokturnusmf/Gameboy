@@ -7,8 +7,7 @@ Emulator::Emulator(const std::string& file_path, bool(*display_callback)(byte*))
 
 void Emulator::run() {
     while (!display.close_requested()) {
-        long cycles = interrupts.process();
-        cycles += execute();
+        int cycles = interrupts.process() + execute();
         display.advance(cycles);
         timer.update(cycles);
     }

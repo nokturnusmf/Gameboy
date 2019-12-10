@@ -7,7 +7,7 @@ class Timer {
 public:
     Timer(Interrupts& interrupts) : interrupts(interrupts) {}
 
-    void update(long cycles);
+    void update(int cycles);
 
     byte div = 0;
 
@@ -19,6 +19,6 @@ public:
 private:
     Interrupts& interrupts;
 
-    long div_counter = 0;
-    long tim_counter = 0;
+    int div_counter = 0;
+    int tim_counter = 0;
 };

@@ -1,6 +1,6 @@
 #pragma once
 
-long Emulator::execute_bits() {
+int Emulator::execute_bits() {
     byte op = memmap.read((++cpu.pc)++);
 
     switch (op) {

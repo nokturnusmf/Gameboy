@@ -2,7 +2,7 @@
 
 extern void error(const char* msg, int v = -1);
 
-long Emulator::execute() {
+int Emulator::execute() {
     if (cpu.halt) {
         return 4;
     }

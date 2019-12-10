@@ -2,7 +2,7 @@
 
 #include "types.h"
 
-class CPU;
+struct CPU;
 class MemoryMap;
 
 struct Interrupts {
@@ -16,7 +16,7 @@ struct Interrupts {
         Joypad = 0x10
     };
 
-    long process();
+    int process();
 
     bool ime = 0;
     byte enabled = 0;

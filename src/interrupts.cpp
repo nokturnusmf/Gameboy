@@ -8,7 +8,7 @@ static void do_call(CPU& cpu, MemoryMap& memmap, word address) {
     cpu.pc = address;
 }
 
-long Interrupts::process() {
+int Interrupts::process() {
     byte b = enabled & flags;
 
     if (!ime) {

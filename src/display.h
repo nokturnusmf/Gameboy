@@ -2,8 +2,8 @@
 
 #include "types.h"
 
+struct Interrupts;
 class MemoryMap;
-class Interrupts;
 
 struct Pixel {
     byte r;
@@ -40,7 +40,7 @@ class Display {
 public:
     Display(MemoryMap& memmap, Interrupts& interrupts, bool(*display_callback)(byte*));
 
-    void advance(long cycles);
+    void advance(int cycles);
 
     byte read_io(word address);
     void write_io(word address, byte value);
@@ -83,5 +83,5 @@ private:
     Pixel frame[160 * 144];
     bool depth[160 * 144];
 
-    long cycle_count = 0;
+    int cycle_count = 0;
 };
