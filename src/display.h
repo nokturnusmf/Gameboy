@@ -1,6 +1,7 @@
 #pragma once
 
 #include "types.h"
+#include "bank.h"
 
 struct Interrupts;
 class MemoryMap;
@@ -25,15 +26,12 @@ struct LCDRegisters {
     byte scx;
     byte ly;
     byte lyc;
-    byte bgp;
-    byte obp0;
-    byte obp1;
     byte wy;
     byte wx;
     byte bgpi;
-    byte bgpd;
     byte obpi;
-    byte obpd;
+    byte bgp[64];
+    byte obp[64];
 };
 
 class Display {
@@ -42,18 +40,25 @@ public:
 
     void advance(int cycles);
 
-    byte read_io(word address);
-    void write_io(word address, byte value);
+    byte read(word address) { return vram[address]; }
+    void write(word address, byte value) { vram[address] = value; }
+
+    byte read_io(byte reg);
+    void write_io(byte reg, byte value);
 
     bool close_requested() const { return !open; }
 
 private:
     void set_mode(VideoMode mode);
+    word vram_word(word address);
 
     bool display_enabled() const;
     bool bg_enabled() const;
     bool window_enabled() const;
     bool sprites_enabled() const;
+
+    void write_old_color(byte* palette, byte value);
+    byte read_old_color(byte* palette);
 
     void draw_scanline(int line);
 
@@ -64,10 +69,9 @@ private:
     void draw_sprites();
     void draw_sprite(int n);
 
-    void draw_pixel_line(word pixel, int x, int y, bool is_sprite, bool sprite_palette, bool sprite_priority);
+    void draw_pixel_line(int x, int y, word data, byte* palette, byte palette_index, bool is_sprite, bool sprite_priority);
 
-    Pixel get_pixel(byte index, bool is_sprite, bool sprite_palette);
-    Pixel map_pixel(byte index);
+    Pixel map_pixel(byte* palette, byte color);
 
     void write_frame();
 
@@ -79,6 +83,7 @@ private:
 
     VideoMode mode;
     LCDRegisters regs;
+    BankedMemory<0x8000, 0x2000, 0x0000> vram;
 
     Pixel frame[160 * 144];
     bool depth[160 * 144];

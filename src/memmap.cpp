@@ -6,7 +6,7 @@
 #include "boot.h"
 
 MemoryMap::MemoryMap(Display& display, Interrupts& interrupts, Timer& timer, Input& input, const std::string& file_path)
-    : display(display), interrupts(interrupts), timer(timer), input(input), ram(0x8000), vram(0x4000), oam(160), hram(127), rom(file_path) {
+    : display(display), interrupts(interrupts), timer(timer), input(input), ram(0x8000), oam(160), hram(127), rom(file_path) {
 
 }
 
@@ -16,7 +16,7 @@ byte MemoryMap::read(word address) {
     } if (address < 0x8000) {
         return rom.read(address);
     } else if (address < 0xA000) {
-        return vram[address];
+        return display.read(address);
     } else if (address < 0xC000) {
         return rom.read(address);
     } else if (address < 0xE000) {
@@ -44,7 +44,7 @@ void MemoryMap::write(word address, byte value) {
     if (address < 0x8000) {
         rom.write(address, value);
     } else if (address < 0xA000) {
-        vram[address] = value;
+        display.write(address, value);
     } else if (address < 0xC000) {
         rom.write(address, value);
     } else if (address < 0xE000) {
@@ -94,11 +94,21 @@ byte MemoryMap::read_ctrl(word address) {
     case 0x49:
     case 0x4A:
     case 0x4B:
+    case 0x4F:
     case 0x68:
     case 0x69:
     case 0x6A:
     case 0x6B:
-        return display.read_io(address);
+        return display.read_io(address & 0xFF);
+
+    case 0x51:
+    case 0x52:
+    case 0x53:
+    case 0x54:
+    case 0x55:
+        // TODO hdma read
+        return 0;
+
     default:
         return 0;
     }
@@ -135,11 +145,12 @@ void MemoryMap::write_ctrl(word address, byte value) {
     case 0x49:
     case 0x4A:
     case 0x4B:
+    case 0x4F:
     case 0x68:
     case 0x69:
     case 0x6A:
     case 0x6B:
-        display.write_io(address, value);
+        display.write_io(address & 0xFF, value);
         break;
     case 0x46: {
         word source = (word)value << 8;
@@ -148,12 +159,18 @@ void MemoryMap::write_ctrl(word address, byte value) {
         }
         break;
     }
-    case 0x4F:
-        vram.set_bank(value);
-        break;
     case 0x50:
         boot = false;
         break;
+
+    case 0x51:
+    case 0x52:
+    case 0x53:
+    case 0x54:
+    case 0x55:
+        // TODO hdma write
+        break;
+
     default:
         break;
     }

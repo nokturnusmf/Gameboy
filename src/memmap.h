@@ -32,7 +32,6 @@ private:
     Input& input;
 
     BankedMemory<0xC000, 0x1000, 0x1000> ram;
-    BankedMemory<0x8000, 0x2000, 0x0000> vram;
 
     std::vector<byte> oam;
     std::vector<byte> hram;

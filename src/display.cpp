@@ -15,12 +15,11 @@ static const byte WINDOW_TILE_MAP = 0x40;
 static const byte WINDOW_ENABLE = 0x20;
 static const byte TILE_DATA_SELECT = 0x10;
 static const byte BG_TILE_MAP = 0x08;
-static const byte SPRITE_SIZE = 0x04;
 static const byte SPRITE_ENABLE = 0x02;
 static const byte BG_ENABLE = 0x01;
 
 Display::Display(MemoryMap& memmap, Interrupts& interrupts, bool(*display_callback)(byte*))
-    : memmap(memmap), interrupts(interrupts), display_callback(display_callback), regs{} {
+    : memmap(memmap), interrupts(interrupts), display_callback(display_callback), regs{}, vram(0x4000) {
 }
 
 void Display::advance(int cycles) {
@@ -84,6 +83,10 @@ void Display::advance(int cycles) {
         }
         break;
     }
+}
+
+inline word Display::vram_word(word address) {
+    return (word)vram[address] | (word)vram[address + 1] << 8;
 }
 
 inline bool Display::display_enabled() const {
@@ -152,15 +155,36 @@ void Display::draw_window_line(int line) {
     }
 }
 
+inline word flip_pixel_line(word w) {
+    w = (w & 0xF0F0) >> 4 | (w & 0x0F0F) << 4;
+    w = (w & 0xCCCC) >> 2 | (w & 0x3333) << 2;
+    w = (w & 0xAAAA) >> 1 | (w & 0x5555) << 1;
+    return w;
+}
+
 void Display::draw_line(int x, int y, byte row, byte column, word tile_map, word tile_data) {
-    int tile_index = memmap.read(tile_map + (row & ~7u) * 4 + column / 8);
+    int prev_bank = vram.get_bank();
+    vram.set_bank(0);
+
+    int tile_index = vram[tile_map + (row & ~7u) * 4 + column / 8];
     if (tile_data == 0x9000 && tile_index >= 128) {
         tile_index -= 256;
     }
 
-    word data = memmap.read_word(tile_data + tile_index * 16 + (row % 8) * 2);
+    vram.set_bank(1);
+    word attr = vram[tile_map + (row & ~7u) * 4 + column / 8];
+    byte palette = attr & 0b111;
+    bool bank = attr & 0x8;
+    bool flip_y = attr & 0x20;
 
-    draw_pixel_line(data, x, y, false, false, false);
+    vram.set_bank(bank);
+    word data = vram_word(tile_data + tile_index * 16 + ((flip_y ? 7 - row % 8 : row % 8)) * 2);
+    if (attr & 0x10) {
+        data = flip_pixel_line(data);
+    }
+
+    draw_pixel_line(x, y, data, regs.bgp, palette, false, false);
+    vram.set_bank(prev_bank);
 }
 
 void Display::draw_sprites() {
@@ -171,14 +195,10 @@ void Display::draw_sprites() {
     }
 }
 
-inline word flip_pixel_line(word w) {
-    w = (w & 0xF0F0) >> 4 | (w & 0x0F0F) << 4;
-    w = (w & 0xCCCC) >> 2 | (w & 0x3333) << 2;
-    w = (w & 0xAAAA) >> 1 | (w & 0x5555) << 1;
-    return w;
-}
-
 void Display::draw_sprite(int n) {
+    bool prev_bank = vram.get_bank();
+    vram.set_bank(0);
+
     byte y = memmap.read(0xFE00 + n * 4);
     byte x = memmap.read(0xFE01 + n * 4);
     byte tile_index = memmap.read(0xFE02 + n * 4);
@@ -186,21 +206,25 @@ void Display::draw_sprite(int n) {
 
     if (y == 0 || y >= 160 || x == 0 || x >= 168) return;
 
+    vram.set_bank((bool)(attr & 0x8));
+
     for (int i = 0; i < 8; ++i) {
-        word data = memmap.read_word(0x8000 + tile_index * 16 + (attr & 0x40 ? 7 - i : i) * 2);
+        word data = vram_word(0x8000 + tile_index * 16 + (attr & 0x40 ? 7 - i : i) * 2);
         if (attr & 0x20) {
             data = flip_pixel_line(data);
         }
-        draw_pixel_line(data, x - 8, y + i - 16, true, attr & 0x10, ~attr & 0x80);
+        draw_pixel_line(x - 8, y + i - 16, data, regs.obp, (bool)(attr & 0x10) | (attr & 0b111), true, ~attr & 0x80);
     }
+
+    vram.set_bank(prev_bank);
 }
 
-void Display::draw_pixel_line(word pixel, int x, int y, bool is_sprite, bool sprite_palette, bool sprite_priority) {
+void Display::draw_pixel_line(int x, int y, word data, byte* palette, byte palette_index, bool is_sprite, bool sprite_priority) {
     if (y < 0 || y >= 144) return;
 
-    byte upper = pixel >> 8, lower = pixel;
+    byte upper = data >> 8, lower = data;
     for (int i = 0; i < 8; ++i) {
-        byte color = ((upper) & 0x80) >> 6 | (lower >> 7);
+        byte color = (upper & 0x80) >> 6 | (lower >> 7);
         upper <<= 1; lower <<= 1;
 
         if (x + i < 0) continue;
@@ -208,28 +232,14 @@ void Display::draw_pixel_line(word pixel, int x, int y, bool is_sprite, bool spr
 
         if (is_sprite && (!color || (!sprite_priority && depth[y * 160 + x + i]))) continue;
 
-        frame[y * 160 + x + i] = get_pixel(color, is_sprite, sprite_palette);
+        frame[y * 160 + x + i] = map_pixel(palette + 8 * palette_index, color);
         depth[y * 160 + x + i] = is_sprite | color;
     }
 }
 
-inline Pixel Display::get_pixel(byte index, bool is_sprite, bool sprite_palette) {
-    byte palette = is_sprite ? sprite_palette ? regs.obp1 : regs.obp0 : regs.bgp;
-    return map_pixel((palette & (0b11 << index * 2)) >> index * 2);
-}
-
-Pixel Display::map_pixel(byte index) {
-    switch (index) {
-    case 0:
-        return { 255, 255, 255 };
-    case 1:
-        return { 144, 144, 144 };
-    case 2:
-        return { 64, 64, 64 };
-    case 3:
-        return { 0, 0, 0 };
-    }
-    throw index;
+Pixel Display::map_pixel(byte* palette, byte color) {
+    word w = palette[color * 2] | (palette[color * 2 + 1] << 8);
+    return Pixel{ (byte)((w & 0x1F) << 3), (byte)((w & 0x3E0) >> 2), (byte)((w & 0x7C00) >> 7) };
 }
 
 void Display::write_frame()  {
@@ -237,8 +247,38 @@ void Display::write_frame()  {
     for (auto& b : depth) b = 0;
 }
 
-byte Display::read_io(word address) {
-    switch (address & 0xFF) {
+void Display::write_old_color(byte* palette, byte value) {
+    static const word values[] = { 0x7FFF, 0x56B5, 0x2D6B, 0x0000 };
+    word* p = reinterpret_cast<word*>(palette);
+    for (int i = 0; i < 4; ++i) {
+        p[i] = values[value & 0b11];
+        value >>= 2;
+    }
+}
+
+byte Display::read_old_color(byte* palette) {
+    byte result = 0;
+    word* p = reinterpret_cast<word*>(palette);
+    for (int i = 3; i >= 0; --i) {
+        result <<= 2;
+        switch (p[i]) {
+        // case 0x7FFF: 0
+        case 0x56B5:
+            result |= 0b01;
+            break;
+        case 0x2D6B:
+            result |= 0b10;
+            break;
+        case 0x0000:
+            result |= 0b11;
+            break;
+        }
+    }
+    return result;
+}
+
+byte Display::read_io(byte reg) {
+    switch (reg) {
     case 0x40:
         return regs.lcdc;
     case 0x41:
@@ -252,30 +292,32 @@ byte Display::read_io(word address) {
     case 0x45:
         return regs.lyc;
     case 0x47:
-        return regs.bgp;
+        return read_old_color(regs.bgp);
     case 0x48:
-        return regs.obp0;
+        return read_old_color(regs.obp);
     case 0x49:
-        return regs.obp1;
+        return read_old_color(regs.obp + 8);
     case 0x4A:
         return regs.wy;
     case 0x4B:
         return regs.wx;
+    case 0x4F:
+        return vram.get_bank();
     case 0x68:
         return regs.bgpi;
     case 0x69:
-        return regs.bgpd;
+        return regs.bgp[regs.bgpi & 0x3F];
     case 0x6A:
         return regs.obpi;
     case 0x6B:
-        return regs.obpd;
+        return regs.obp[regs.obpi & 0x3F];
     default:
         return 0xFF;
     }
 }
 
-void Display::write_io(word address, byte value) {
-    switch (address & 0xFF) {
+void Display::write_io(byte reg, byte value) {
+    switch (reg) {
     case 0x40:
         regs.lcdc = value;
         break;
@@ -295,13 +337,16 @@ void Display::write_io(word address, byte value) {
         regs.lyc = value;
         break;
     case 0x47:
-        regs.bgp = value;
+        write_old_color(regs.bgp, value);
         break;
     case 0x48:
-        regs.obp0 = value;
+        write_old_color(regs.obp, value);
+        for (int i = 16; i < 64; i += 8) {
+            write_old_color(regs.obp + i, value);
+        }
         break;
     case 0x49:
-        regs.obp1 = value;
+        write_old_color(regs.obp + 8, value);
         break;
     case 0x4A:
         regs.wy = value;
@@ -309,17 +354,26 @@ void Display::write_io(word address, byte value) {
     case 0x4B:
         regs.wx = value;
         break;
+    case 0x4F:
+        vram.set_bank(value);
+        break;
     case 0x68:
         regs.bgpi = value;
         break;
     case 0x69:
-        regs.bgpd = value;
+        regs.bgp[regs.bgpi & 0x3F] = value;
+        if (regs.bgpi & 0x80) {
+            (++regs.bgpi &= 0x3F) |= 0x80;
+        }
         break;
     case 0x6A:
         regs.obpi = value;
         break;
     case 0x6B:
-        regs.obpd = value;
+        regs.obp[regs.obpi & 0x3F] = value;
+        if (regs.obpi & 0x80) {
+            (++regs.obpi &= 0x3F) |= 0x80;
+        }
         break;
     }
 }
