@@ -87,7 +87,7 @@ MBC* create_mbc(std::vector<byte>&& data) {
         return new MBC3RB(std::move(data), data[0x149]);
 
     default:
-        error("unimplemented mbc type ", data[0x147]);
+        error("unimplemented mbc type", data[0x147]);
         return 0;
     }
 }

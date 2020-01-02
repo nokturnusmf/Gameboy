@@ -3,17 +3,13 @@
 #include "display.h"
 #include "interrupts.h"
 #include "input.h"
-#include "boot.h"
 
 MemoryMap::MemoryMap(Display& display, Interrupts& interrupts, Timer& timer, Input& input, const std::string& file_path)
     : display(display), interrupts(interrupts), timer(timer), input(input), ram(0x8000), oam(160), hram(127), rom(file_path) {
-
 }
 
 byte MemoryMap::read(word address) {
-    if (boot && address < 0x100) {
-        return bootrom[address];
-    } if (address < 0x8000) {
+    if (address < 0x8000) {
         return rom.read(address);
     } else if (address < 0xA000) {
         return display.read(address);
@@ -109,6 +105,9 @@ byte MemoryMap::read_ctrl(word address) {
         // TODO hdma read
         return 0;
 
+    case 0x70:
+        return ram.get_bank();
+
     default:
         return 0;
     }
@@ -159,17 +158,18 @@ void MemoryMap::write_ctrl(word address, byte value) {
         }
         break;
     }
-    case 0x50:
-        boot = false;
-        break;
 
     case 0x51:
     case 0x52:
     case 0x53:
     case 0x54:
     case 0x55:
-        // TODO hdma write
+        // TODO hmda write
         break;
+
+    case 0x70:
+        ram.set_bank(value ? value : 1);
+        return;
 
     default:
         break;

@@ -172,7 +172,7 @@ void Display::draw_line(int x, int y, byte row, byte column, word tile_map, word
     }
 
     vram.set_bank(1);
-    word attr = vram[tile_map + (row & ~7u) * 4 + column / 8];
+    byte attr = vram[tile_map + (row & ~7u) * 4 + column / 8];
     byte palette = attr & 0b111;
     bool bank = attr & 0x8;
     bool flip_y = attr & 0x20;
