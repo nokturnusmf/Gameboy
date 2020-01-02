@@ -18,11 +18,10 @@ debug: bin/debug
 all: release debug
 
 clean:
-	find bin -type f -delete
-	cd src && find . -type d -exec mkdir -p -- ../bin/obj/release/{} ../bin/obj/debug/{} \;
+	rm -rf bin
 
 bin:
-	mkdir -p bin
+	mkdir -p bin bin/obj/release bin/obj/debug
 
 DEPENDS := $(RELEASE_OBJ:.o=.d) $(DEBUG_OBJ:.o=.d)
 -include $(DEPENDS)
