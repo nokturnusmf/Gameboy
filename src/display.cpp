@@ -126,6 +126,8 @@ void Display::set_mode(VideoMode new_mode) {
 }
 
 void Display::draw_scanline(int line) {
+    int prev_bank = vram.get_bank();
+
     if (bg_enabled()) {
         draw_bg_line(line);
     }
@@ -133,6 +135,8 @@ void Display::draw_scanline(int line) {
     if (window_enabled()) {
         draw_window_line(line);
     }
+
+    vram.set_bank(prev_bank);
 }
 
 void Display::draw_bg_line(int line) {
@@ -163,9 +167,7 @@ inline word flip_pixel_line(word w) {
 }
 
 void Display::draw_line(int x, int y, byte row, byte column, word tile_map, word tile_data) {
-    int prev_bank = vram.get_bank();
     vram.set_bank(0);
-
     int tile_index = vram[tile_map + (row & ~7u) * 4 + column / 8];
     if (tile_data == 0x9000 && tile_index >= 128) {
         tile_index -= 256;
@@ -184,23 +186,19 @@ void Display::draw_line(int x, int y, byte row, byte column, word tile_map, word
     }
 
     draw_pixel_line(x, y, data, regs.bgp, palette, false, false);
-    vram.set_bank(prev_bank);
 }
 
 void Display::draw_sprites() {
     if (sprites_enabled()) {
+        int prev_bank = vram.get_bank();
         for (int i = 0; i < 40; ++i) {
             draw_sprite(i);
         }
+        vram.set_bank(prev_bank);
     }
 }
 
 void Display::draw_sprite(int n) {
-    int prev_bank = vram.get_bank();
-    vram.set_bank(0);
-
-    int sprite_h = regs.lcdc & 0b100 ? 16 : 8;
-
     byte y = memmap.read(0xFE00 + n * 4);
     byte x = memmap.read(0xFE01 + n * 4);
     byte tile_index = memmap.read(0xFE02 + n * 4);
@@ -209,7 +207,7 @@ void Display::draw_sprite(int n) {
     if (y == 0 || y >= 160 || x == 0 || x >= 168) return;
 
     vram.set_bank((bool)(attr & 0x8));
-
+    int sprite_h = regs.lcdc & 0b100 ? 16 : 8;
     for (int i = 0; i < sprite_h; ++i) {
         word data = vram_word(0x8000 + tile_index * 16 + (attr & 0x40 ? sprite_h - i - 1 : i) * 2);
         if (attr & 0x20) {
@@ -217,8 +215,6 @@ void Display::draw_sprite(int n) {
         }
         draw_pixel_line(x - 8, y + i - 16, data, regs.obp, (bool)(attr & 0x10) | (attr & 0b111), true, ~attr & 0x80);
     }
-
-    vram.set_bank(prev_bank);
 }
 
 void Display::draw_pixel_line(int x, int y, word data, byte* palette, byte palette_index, bool is_sprite, bool sprite_priority) {
