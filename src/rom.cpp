@@ -41,16 +41,16 @@ private:
 
 class MBC3RB : public MBC {
 public:
-    MBC3RB(std::vector<byte>&& data, int ram_size)
-        : rom(std::move(data)), ram(ram_size == 3 ? 0x8000 : 0x800 * ram_size * ram_size) {
-        std::ifstream file(reinterpret_cast<const char*>(&rom[0x134]));
+    MBC3RB(std::vector<byte>&& data, int ram_size, const std::string& save_path)
+        : rom(std::move(data)), ram(ram_size == 3 ? 0x8000 : 0x800 * ram_size * ram_size), save_path(save_path) {
+        std::ifstream file(save_path);
         if (file) {
             file.read(reinterpret_cast<char*>(&ram[0xA000]), ram.size());
         }
     }
 
     ~MBC3RB() {
-        std::ofstream file(reinterpret_cast<const char*>(&rom[0x134]));
+        std::ofstream file(save_path);
         if (file) {
             ram.set_bank(0);
             file.write(reinterpret_cast<const char*>(&ram[0xA000]), ram.size());
@@ -76,15 +76,18 @@ public:
 private:
     BankedMemory<0x0000, 0x4000, 0x4000> rom;
     BankedMemory<0xA000, 0x2000, 0x0000> ram;
+
+    std::string save_path;
 };
 
-MBC* create_mbc(std::vector<byte>&& data) {
+MBC* create_mbc(const std::string& file_path) {
+    auto data = load_file(file_path);
     switch (data[0x147]) {
     case 0x00:
         return new NoMBC(std::move(data));
 
     case 0x13:
-        return new MBC3RB(std::move(data), data[0x149]);
+        return new MBC3RB(std::move(data), data[0x149], file_path + ".sav");
 
     default:
         error("unimplemented mbc type", data[0x147]);
@@ -93,8 +96,7 @@ MBC* create_mbc(std::vector<byte>&& data) {
 }
 
 Rom::Rom(const std::string& file_path) {
-    auto data = load_file(file_path);
-    this->mbc = create_mbc(std::move(data));
+    this->mbc = create_mbc(file_path);
 }
 
 Rom::~Rom() {
