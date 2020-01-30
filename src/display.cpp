@@ -254,27 +254,6 @@ void Display::write_old_color(byte* palette, byte value) {
     }
 }
 
-byte Display::read_old_color(byte* palette) {
-    byte result = 0;
-    word* p = reinterpret_cast<word*>(palette);
-    for (int i = 3; i >= 0; --i) {
-        result <<= 2;
-        switch (p[i]) {
-        // case 0x7FFF: 0
-        case 0x56B5:
-            result |= 0b01;
-            break;
-        case 0x2D6B:
-            result |= 0b10;
-            break;
-        case 0x0000:
-            result |= 0b11;
-            break;
-        }
-    }
-    return result;
-}
-
 byte Display::read_io(byte reg) {
     switch (reg) {
     case 0x40:
@@ -290,11 +269,11 @@ byte Display::read_io(byte reg) {
     case 0x45:
         return regs.lyc;
     case 0x47:
-        return read_old_color(regs.bgp);
+        return regs.dmgp[0];
     case 0x48:
-        return read_old_color(regs.obp);
+        return regs.dmgp[1];
     case 0x49:
-        return read_old_color(regs.obp + 8);
+        return regs.dmgp[2];
     case 0x4A:
         return regs.wy;
     case 0x4B:
@@ -335,15 +314,18 @@ void Display::write_io(byte reg, byte value) {
         regs.lyc = value;
         break;
     case 0x47:
+        regs.dmgp[0] = value;
         write_old_color(regs.bgp, value);
         break;
     case 0x48:
+        regs.dmgp[1] = value;
         write_old_color(regs.obp, value);
         for (int i = 16; i < 64; i += 8) {
             write_old_color(regs.obp + i, value);
         }
         break;
     case 0x49:
+        regs.dmgp[2] = value;
         write_old_color(regs.obp + 8, value);
         break;
     case 0x4A:

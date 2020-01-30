@@ -32,6 +32,7 @@ struct LCDRegisters {
     byte obpi;
     byte bgp[64];
     byte obp[64];
+    byte dmgp[3];
 };
 
 class Display {
