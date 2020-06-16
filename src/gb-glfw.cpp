@@ -127,6 +127,5 @@ void error(const char* msg, int v) {
         std::cerr << std::hex << ' ' << v;
     }
     std::cerr << '\n';
-    char c;
-    while (1) std::cin >> c;
+    exit(1);
 }
