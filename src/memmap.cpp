@@ -98,12 +98,15 @@ byte MemoryMap::read_ctrl(word address) {
         return display.read_io(address & 0xFF);
 
     case 0x51:
+        return hdma[0];
     case 0x52:
+        return hdma[1];
     case 0x53:
+        return hdma[2];
     case 0x54:
+        return hdma[3];
     case 0x55:
-        // TODO hdma read
-        return 0;
+        return 0x80;
 
     case 0x70:
         return ram.get_bank();
@@ -160,18 +163,29 @@ void MemoryMap::write_ctrl(word address, byte value) {
     }
 
     case 0x51:
-    case 0x52:
-    case 0x53:
-    case 0x54:
-    case 0x55:
-        // TODO hmda write
+        hdma[0] = value;
         break;
+    case 0x52:
+        hdma[1] = value & 0xF0;
+        break;
+    case 0x53:
+        hdma[2] = value & 0x1F;
+        break;
+    case 0x54:
+        hdma[3] = value & 0xF0;
+        break;
+    case 0x55: {
+        word src = (hdma[0] << 8) | hdma[1];
+        word dst = (hdma[2] << 8) | hdma[3];
+        int n = ((value & 0x7F) + 1) << 4;
+        for (int i = 0; i < n; ++i) {
+            display.write(0x8000 + dst + i, read(src + i));
+        }
+        break;
+    }
 
     case 0x70:
         ram.set_bank(value ? value : 1);
         return;
-
-    default:
-        break;
     }
 }

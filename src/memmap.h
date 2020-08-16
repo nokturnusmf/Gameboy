@@ -37,4 +37,6 @@ private:
     std::vector<byte> hram;
 
     Rom rom;
+
+    byte hdma[4];
 };
