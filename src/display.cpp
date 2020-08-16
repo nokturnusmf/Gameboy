@@ -97,8 +97,8 @@ inline bool Display::bg_enabled() const {
     return regs.lcdc & BG_ENABLE;
 }
 
-inline bool Display::window_enabled() const {
-    return regs.lcdc & WINDOW_ENABLE && regs.wx < 167 && regs.wy < 144;
+inline bool Display::window_enabled(int line) const {
+    return regs.lcdc & WINDOW_ENABLE && regs.wx < 167 && regs.wy < 144 && line >= regs.wy;
 }
 
 inline bool Display::sprites_enabled() const {
@@ -132,7 +132,7 @@ void Display::draw_scanline(int line) {
         draw_bg_line(line);
     }
 
-    if (window_enabled()) {
+    if (window_enabled(line)) {
         draw_window_line(line);
     }
 
@@ -143,9 +143,8 @@ void Display::draw_bg_line(int line) {
     word tile_map = regs.lcdc & BG_TILE_MAP ? 0x9C00 : 0x9800;
     word tile_data = regs.lcdc & TILE_DATA_SELECT ? 0x8000 : 0x9000;
 
-    byte row = line + regs.scy;
     for (int i = 0; i < 168; i += 8) {
-        draw_line(i - regs.scx % 8, line, row, i + regs.scx, tile_map, tile_data);
+        draw_line(i - regs.scx % 8, line, line + regs.scy, i + regs.scx, tile_map, tile_data);
     }
 }
 
@@ -153,9 +152,8 @@ void Display::draw_window_line(int line) {
     word tile_map = regs.lcdc & WINDOW_TILE_MAP ? 0x9C00 : 0x9800;
     word tile_data = regs.lcdc & TILE_DATA_SELECT ? 0x8000 : 0x9000;
 
-    byte row = line + regs.wy;
     for (int i = 0; i < 168; i += 8) {
-        draw_line(i - (regs.wx - 7) % 8, line, row, i + regs.wx - 7, tile_map, tile_data);
+        draw_line(i - (regs.wx - 7) % 8, line, line - regs.wy, i + regs.wx - 7, tile_map, tile_data);
     }
 }
 
@@ -191,7 +189,7 @@ void Display::draw_line(int x, int y, byte row, byte column, word tile_map, word
 void Display::draw_sprites() {
     if (sprites_enabled()) {
         int prev_bank = vram.get_bank();
-        for (int i = 0; i < 40; ++i) {
+        for (int i = 39; i >= 0; --i) {
             draw_sprite(i);
         }
         vram.set_bank(prev_bank);

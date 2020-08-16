@@ -55,7 +55,7 @@ private:
 
     bool display_enabled() const;
     bool bg_enabled() const;
-    bool window_enabled() const;
+    bool window_enabled(int line) const;
     bool sprites_enabled() const;
 
     void write_old_color(byte* palette, byte value);
