@@ -169,6 +169,36 @@ private:
     int rtc = 0;
 };
 
+class MBC5 : public MBCBase {
+public:
+    MBC5(std::vector<byte>&& data, int ram_size, const std::string& save_path)
+        : MBCBase(std::move(data), ram_size, save_path) {}
+
+    byte read(word address) {
+        return address < 0x8000 ? rom[address] : ram[address];
+    }
+
+    void write(word address, byte value) {
+        if (address >= 0xA000) {
+            ram[address] = value;
+        } else if (address < 0x2000) {
+            // enable/disable ram
+        } else if (address < 0x3000) {
+            lower = value;
+            rom.set_bank((upper << 8) | lower);
+        } else if (address < 0x4000) {
+            upper = value;
+            rom.set_bank((upper << 8) | lower);
+        } else if (address < 0x6000) {
+            ram.set_bank(value);
+        }
+    }
+
+private:
+    byte lower = 0;
+    byte upper = 0;
+};
+
 MBC* create_mbc(const std::string& file_path) {
     auto data = load_file(file_path);
     switch (data[0x147]) {
@@ -188,6 +218,14 @@ MBC* create_mbc(const std::string& file_path) {
     case 0x12:
     case 0x13:
         return new MBC3(std::move(data), data[0x149], file_path + ".sav");
+
+    case 0x19:
+    case 0x1A:
+    case 0x1B:
+    case 0x1C:
+    case 0x1D:
+    case 0x1E:
+        return new MBC5(std::move(data), data[0x149], file_path + ".sav");
 
     default:
         error("unimplemented mbc type", data[0x147]);
