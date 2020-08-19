@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <string>
+#include <memory>
 
 #include "types.h"
 #include "bank.h"
@@ -17,5 +18,5 @@ public:
     void write(word address, byte value);
 
 private:
-    MBC* mbc;
+    std::unique_ptr<MBC> mbc;
 };

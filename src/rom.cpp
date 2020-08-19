@@ -199,25 +199,25 @@ private:
     byte upper = 0;
 };
 
-MBC* create_mbc(const std::string& file_path) {
+std::unique_ptr<MBC> create_mbc(const std::string& file_path) {
     auto data = load_file(file_path);
     switch (data[0x147]) {
     case 0x00:
-        return new NoMBC(std::move(data));
+        return std::make_unique<NoMBC>(std::move(data));
 
     case 0x01:
     case 0x02:
     case 0x03:
     case 0x08:
     case 0x09:
-        return new MBC1(std::move(data), data[0x149], file_path + ".sav");
+        return std::make_unique<MBC1>(std::move(data), data[0x149], file_path + ".sav");
 
     case 0x0F:
     case 0x10:
     case 0x11:
     case 0x12:
     case 0x13:
-        return new MBC3(std::move(data), data[0x149], file_path + ".sav");
+        return std::make_unique<MBC3>(std::move(data), data[0x149], file_path + ".sav");
 
     case 0x19:
     case 0x1A:
@@ -225,21 +225,16 @@ MBC* create_mbc(const std::string& file_path) {
     case 0x1C:
     case 0x1D:
     case 0x1E:
-        return new MBC5(std::move(data), data[0x149], file_path + ".sav");
+        return std::make_unique<MBC5>(std::move(data), data[0x149], file_path + ".sav");
 
     default:
         error("unimplemented mbc type", data[0x147]);
-        return 0;
+        return nullptr;
     }
 }
 
-Rom::Rom(const std::string& file_path) {
-    this->mbc = create_mbc(file_path);
-}
-
-Rom::~Rom() {
-    delete mbc;
-}
+Rom::Rom(const std::string& file_path) : mbc(create_mbc(file_path)) {}
+Rom::~Rom() = default;
 
 byte Rom::read(word address) {
     return mbc->read(address);
