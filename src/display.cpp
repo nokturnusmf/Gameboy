@@ -175,11 +175,12 @@ void Display::draw_line(int x, int y, byte row, byte column, word tile_map, word
     byte attr = vram[tile_map + (row & ~7u) * 4 + column / 8];
     byte palette = attr & 0b111;
     bool bank = attr & 0x8;
+    bool flip_x = attr & 0x10;
     bool flip_y = attr & 0x20;
 
     vram.set_bank(bank);
     word data = vram_word(tile_data + tile_index * 16 + ((flip_y ? 7 - row % 8 : row % 8)) * 2);
-    if (attr & 0x10) {
+    if (flip_x) {
         data = flip_pixel_line(data);
     }
 
