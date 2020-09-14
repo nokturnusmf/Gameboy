@@ -18,7 +18,7 @@ static const byte BG_TILE_MAP = 0x08;
 static const byte SPRITE_ENABLE = 0x02;
 static const byte BG_ENABLE = 0x01;
 
-Display::Display(MemoryMap& memmap, Interrupts& interrupts, bool(*display_callback)(byte*))
+Display::Display(MemoryMap* memmap, Interrupts* interrupts, bool(*display_callback)(byte*))
     : memmap(memmap), interrupts(interrupts), display_callback(display_callback), regs{}, vram(0x4000) {
 }
 
@@ -38,11 +38,11 @@ void Display::advance(int cycles) {
             set_mode(VideoMode::HBlank);
 
             if (regs.stat & 0x08) {
-                interrupts.flags |= Interrupts::LCDStat;
+                interrupts->flags |= Interrupts::LCDStat;
             }
 
             if (regs.stat & LYC_IE && regs.ly == regs.lyc) {
-                interrupts.flags |= Interrupts::LCDStat;
+                interrupts->flags |= Interrupts::LCDStat;
                 regs.stat |= LYC_COINC;
             } else {
                 regs.stat &= ~LYC_COINC;
@@ -61,7 +61,7 @@ void Display::advance(int cycles) {
             } else {
                 set_mode(VideoMode::VBlank);
                 if (display_enabled()) {
-                    interrupts.flags |= Interrupts::VBlank;
+                    interrupts->flags |= Interrupts::VBlank;
                 }
             }
         }
@@ -198,10 +198,10 @@ void Display::draw_sprites() {
 }
 
 void Display::draw_sprite(int n) {
-    byte y = memmap.read(0xFE00 + n * 4);
-    byte x = memmap.read(0xFE01 + n * 4);
-    byte tile_index = memmap.read(0xFE02 + n * 4);
-    byte attr = memmap.read(0xFE03 + n * 4);
+    byte y = memmap->read(0xFE00 + n * 4);
+    byte x = memmap->read(0xFE01 + n * 4);
+    byte tile_index = memmap->read(0xFE02 + n * 4);
+    byte attr = memmap->read(0xFE03 + n * 4);
 
     if (y == 0 || y >= 160 || x == 0 || x >= 168) return;
 

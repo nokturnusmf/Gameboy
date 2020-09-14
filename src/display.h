@@ -37,7 +37,7 @@ struct LCDRegisters {
 
 class Display {
 public:
-    Display(MemoryMap& memmap, Interrupts& interrupts, bool(*display_callback)(byte*));
+    Display(MemoryMap* memmap, Interrupts* interrupts, bool(*display_callback)(byte*));
 
     void advance(int cycles);
 
@@ -76,8 +76,8 @@ private:
 
     void write_frame();
 
-    MemoryMap& memmap;
-    Interrupts& interrupts;
+    MemoryMap* memmap;
+    Interrupts* interrupts;
 
     bool(*display_callback)(byte*);
     bool open = true;

@@ -6,7 +6,7 @@ struct CPU;
 class MemoryMap;
 
 struct Interrupts {
-    Interrupts(CPU& cpu, MemoryMap& memmap) : cpu(cpu), memmap(memmap) {}
+    Interrupts(CPU* cpu, MemoryMap* memmap) : cpu(cpu), memmap(memmap) {}
 
     enum {
         VBlank = 0x01,
@@ -23,6 +23,6 @@ struct Interrupts {
     byte flags = 0;
 
 private:
-    CPU& cpu;
-    MemoryMap& memmap;
+    CPU* cpu;
+    MemoryMap* memmap;
 };

@@ -24,6 +24,8 @@ public:
 
     virtual byte read(word address) = 0;
     virtual void write(word address, byte value) = 0;
+
+    virtual std::unique_ptr<MBC> clone() const = 0;
 };
 
 class NoMBC : public MBC {
@@ -35,6 +37,10 @@ public:
     }
 
     void write(word, byte) {}
+
+    std::unique_ptr<MBC> clone() const {
+        return std::make_unique<NoMBC>(*this);
+    }
 
 private:
     std::vector<byte> data;
@@ -92,6 +98,10 @@ public:
         }
     }
 
+    std::unique_ptr<MBC> clone() const {
+        return std::make_unique<MBC1>(*this);
+    }
+
 private:
     void set_banks() {
         if (mode) {
@@ -140,6 +150,10 @@ public:
                 rtc = value;
             }
         }
+    }
+
+    std::unique_ptr<MBC> clone() const {
+        return std::make_unique<MBC3>(*this);
     }
 
 private:
@@ -194,6 +208,10 @@ public:
         }
     }
 
+    std::unique_ptr<MBC> clone() const {
+        return std::make_unique<MBC5>(*this);
+    }
+
 private:
     byte lower = 0;
     byte upper = 0;
@@ -235,6 +253,15 @@ std::unique_ptr<MBC> create_mbc(const std::string& file_path) {
 
 Rom::Rom(const std::string& file_path) : mbc(create_mbc(file_path)) {}
 Rom::~Rom() = default;
+
+Rom::Rom(const Rom& other) {
+    *this = other;
+}
+
+Rom& Rom::operator=(const Rom& other) {
+    this->mbc = other.mbc->clone();
+    return *this;
+}
 
 byte Rom::read(word address) {
     return mbc->read(address);

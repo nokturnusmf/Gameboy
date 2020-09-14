@@ -3,9 +3,9 @@
 #include "cpu.h"
 #include "memmap.h"
 
-static void do_call(CPU& cpu, MemoryMap& memmap, word address) {
-    memmap.write_word(cpu.sp -= 2, cpu.pc);
-    cpu.pc = address;
+static void do_call(CPU* cpu, MemoryMap* memmap, word address) {
+    memmap->write_word(cpu->sp -= 2, cpu->pc);
+    cpu->pc = address;
 }
 
 int Interrupts::process() {
@@ -13,7 +13,7 @@ int Interrupts::process() {
 
     if (!ime) {
         if (b) {
-            cpu.halt = false;
+            cpu->halt = false;
             return 4;
         } else {
             return 0;
@@ -48,7 +48,7 @@ int Interrupts::process() {
 
     ime = false;
     flags &= ~b;
-    long cycles = cpu.halt ? 24 : 20;
-    cpu.halt = false;
+    long cycles = cpu->halt ? 24 : 20;
+    cpu->halt = false;
     return cycles;
 }

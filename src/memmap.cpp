@@ -4,7 +4,7 @@
 #include "interrupts.h"
 #include "input.h"
 
-MemoryMap::MemoryMap(Display& display, Interrupts& interrupts, Timer& timer, Input& input, const std::string& file_path)
+MemoryMap::MemoryMap(Display* display, Interrupts* interrupts, Timer* timer, Input* input, const std::string& file_path)
     : display(display), interrupts(interrupts), timer(timer), input(input), ram(0x8000), oam(160), hram(127), rom(file_path) {
 }
 
@@ -12,7 +12,7 @@ byte MemoryMap::read(word address) {
     if (address < 0x8000) {
         return rom.read(address);
     } else if (address < 0xA000) {
-        return display.read(address);
+        return display->read(address);
     } else if (address < 0xC000) {
         return rom.read(address);
     } else if (address < 0xE000) {
@@ -28,7 +28,7 @@ byte MemoryMap::read(word address) {
     } else if (address < 0xFFFF) {
         return hram[address - 0xFF80];
     } else {
-        return interrupts.enabled;
+        return interrupts->enabled;
     }
 }
 
@@ -40,7 +40,7 @@ void MemoryMap::write(word address, byte value) {
     if (address < 0x8000) {
         rom.write(address, value);
     } else if (address < 0xA000) {
-        display.write(address, value);
+        display->write(address, value);
     } else if (address < 0xC000) {
         rom.write(address, value);
     } else if (address < 0xE000) {
@@ -56,7 +56,7 @@ void MemoryMap::write(word address, byte value) {
     } else if (address < 0xFFFF) {
         hram[address - 0xFF80] = value;
     } else {
-        interrupts.enabled = value;
+        interrupts->enabled = value;
     }
 }
 
@@ -68,17 +68,17 @@ void MemoryMap::write_word(word address, word value) {
 byte MemoryMap::read_ctrl(word address) {
     switch (address & 0xFF) {
     case 0x00:
-        return input.read();
+        return input->read();
     case 0x04:
-        return timer.div;
+        return timer->div;
     case 0x05:
-        return timer.tima;
+        return timer->tima;
     case 0x06:
-        return timer.tma;
+        return timer->tma;
     case 0x07:
-        return timer.tac;
+        return timer->tac;
     case 0x0F:
-        return interrupts.flags;
+        return interrupts->flags;
     case 0x40:
     case 0x41:
     case 0x42:
@@ -95,7 +95,7 @@ byte MemoryMap::read_ctrl(word address) {
     case 0x69:
     case 0x6A:
     case 0x6B:
-        return display.read_io(address & 0xFF);
+        return display->read_io(address & 0xFF);
 
     case 0x51:
         return hdma[0];
@@ -119,22 +119,22 @@ byte MemoryMap::read_ctrl(word address) {
 void MemoryMap::write_ctrl(word address, byte value) {
     switch (address & 0xFF) {
     case 0x00:
-        input.write(value);
+        input->write(value);
         break;
     case 0x04:
-        timer.div = 0;
+        timer->div = 0;
         break;
     case 0x05:
-        timer.tima = value;
+        timer->tima = value;
         break;
     case 0x06:
-        timer.tma = value;
+        timer->tma = value;
         break;
     case 0x07:
-        timer.tac = value;
+        timer->tac = value;
         break;
     case 0x0F:
-        interrupts.flags = value;
+        interrupts->flags = value;
         break;
     case 0x40:
     case 0x41:
@@ -152,7 +152,7 @@ void MemoryMap::write_ctrl(word address, byte value) {
     case 0x69:
     case 0x6A:
     case 0x6B:
-        display.write_io(address & 0xFF, value);
+        display->write_io(address & 0xFF, value);
         break;
     case 0x46: {
         word source = (word)value << 8;
@@ -179,7 +179,7 @@ void MemoryMap::write_ctrl(word address, byte value) {
         word dst = (hdma[2] << 8) | hdma[3];
         int n = ((value & 0x7F) + 1) << 4;
         for (int i = 0; i < n; ++i) {
-            display.write(0x8000 + dst + i, read(src + i));
+            display->write(0x8000 + dst + i, read(src + i));
         }
         break;
     }

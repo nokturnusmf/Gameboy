@@ -14,7 +14,7 @@
 
 class Window {
 public:
-    Window(const std::string& title, int width, int height) {
+    Window(const std::string& title, int width, int height, Emulator* emulator) : emulator(emulator) {
         Window::instance = this;
 
         glfwInit();
@@ -28,10 +28,6 @@ public:
 
     ~Window() {
         glfwTerminate();
-    }
-
-    void set_input(Input* input) {
-        this->input = input;
     }
 
     static bool display_callback_wrapper(byte* pixels) {
@@ -91,9 +87,9 @@ private:
         auto button = get_button(key);
         if (button != Input::Button::None) {
             if (action == GLFW_RELEASE) {
-                input->release(button);
+                emulator->release(button);
             } else {
-                input->press(button);
+                emulator->press(button);
             }
         }
     }
@@ -105,7 +101,7 @@ private:
     bool frame_limit = true;
     std::chrono::time_point<std::chrono::steady_clock> prev_frame = std::chrono::steady_clock::now();
 
-    Input* input;
+    Emulator* emulator;
 };
 
 int main(int argc, char** argv) {
@@ -114,10 +110,8 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    Window window("GameBoy", 640, 576);
-
-    Emulator emulator(argv[1], window.display_callback_wrapper);
-    window.set_input(&emulator.get_input());
+    Emulator emulator(argv[1], Window::display_callback_wrapper);
+    Window window("Gameboy", 640, 576, &emulator);
     emulator.run();
 }
 

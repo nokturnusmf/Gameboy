@@ -5,7 +5,7 @@
 
 class Timer {
 public:
-    Timer(Interrupts& interrupts) : interrupts(interrupts) {}
+    Timer(Interrupts* interrupts) : interrupts(interrupts) {}
 
     void update(int cycles);
 
@@ -17,7 +17,7 @@ public:
     byte tac = 0;
 
 private:
-    Interrupts& interrupts;
+    Interrupts* interrupts;
 
     int div_counter = 0;
     int tim_counter = 0;

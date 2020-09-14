@@ -17,7 +17,7 @@ void Timer::update(int cycles) {
         while (tim_counter >= ccc) {
             tim_counter -= ccc;
             if (!++tima) {
-                interrupts.flags |= Interrupts::Timer;
+                interrupts->flags |= Interrupts::Timer;
                 tima = tma;
             }
         }

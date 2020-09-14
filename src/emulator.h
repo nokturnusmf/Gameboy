@@ -14,10 +14,17 @@
 class Emulator {
 public:
     Emulator(const std::string& file_path, bool(*display_callback)(byte*));
+    Emulator(const Emulator&) = default;
+    Emulator(Emulator&&) = delete;
 
-    Input& get_input() { return input; }
+    Emulator& operator=(const Emulator&) = default;
+    Emulator& operator=(Emulator&&) = delete;
 
     void run();
+    void step();
+
+    void press(Input::Button button) { input.press(button); }
+    void release(Input::Button button) { input.release(button); }
 
 private:
     int execute();
